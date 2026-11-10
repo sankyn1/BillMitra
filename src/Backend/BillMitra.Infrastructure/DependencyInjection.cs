@@ -38,7 +38,11 @@ public static class DependencyInjection
         services.AddScoped<IDocumentSequenceRepository, DocumentSequenceRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<IGstReturnRepository, GstReturnRepository>();
+        services.AddScoped<IEWayBillRepository, EWayBillRepository>();
+        services.AddScoped<IEInvoiceRepository, EInvoiceRepository>();
         services.AddScoped<IGstReturnProvider, Services.SandboxGstReturnProvider>();
+        services.AddScoped<IEWayBillProvider, Services.SandboxEWayBillProvider>();
+        services.AddScoped<IEInvoiceProvider, Services.SandboxEInvoiceProvider>();
         services.AddScoped<IPdfGeneratorService, Services.QuestPdfGeneratorService>();
 
         return services;

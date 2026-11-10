@@ -350,6 +350,69 @@ CREATE TABLE gst_return_filings (
     filed_at_utc DATETIME2 NULL
 );
 
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='eway_bills' AND xtype='U')
+CREATE TABLE eway_bills (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    sales_document_id UNIQUEIDENTIFIER NOT NULL,
+    eway_bill_number NVARCHAR(20) NOT NULL,
+    eway_bill_date DATETIME2 NOT NULL,
+    valid_until DATETIME2 NOT NULL,
+    status INT NOT NULL,
+    supply_type INT NOT NULL,
+    sub_supply_type INT NOT NULL,
+    doc_type NVARCHAR(20) NOT NULL,
+    doc_number NVARCHAR(50) NOT NULL,
+    doc_date DATETIME2 NOT NULL,
+    from_gstin NVARCHAR(15) NOT NULL,
+    from_name NVARCHAR(200) NOT NULL,
+    from_address NVARCHAR(500) NOT NULL,
+    from_place NVARCHAR(100) NOT NULL,
+    from_pincode NVARCHAR(10) NOT NULL,
+    from_state_code NVARCHAR(2) NOT NULL,
+    to_gstin NVARCHAR(15) NULL,
+    to_name NVARCHAR(200) NOT NULL,
+    to_address NVARCHAR(500) NOT NULL,
+    to_place NVARCHAR(100) NOT NULL,
+    to_pincode NVARCHAR(10) NOT NULL,
+    to_state_code NVARCHAR(2) NOT NULL,
+    total_invoice_value DECIMAL(18,2) NOT NULL DEFAULT 0,
+    taxable_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    transportation_mode INT NOT NULL DEFAULT 1,
+    transporter_id NVARCHAR(50) NULL,
+    transporter_name NVARCHAR(200) NULL,
+    transport_doc_no NVARCHAR(50) NULL,
+    transport_doc_date DATETIME2 NULL,
+    vehicle_no NVARCHAR(50) NULL,
+    vehicle_type INT NOT NULL DEFAULT 1,
+    approximate_distance_km INT NOT NULL DEFAULT 10,
+    cancel_reason NVARCHAR(100) NULL,
+    cancel_remarks NVARCHAR(500) NULL,
+    cancelled_at_utc DATETIME2 NULL,
+    created_at_utc DATETIME2 NOT NULL,
+    updated_at_utc DATETIME2 NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='einvoices' AND xtype='U')
+CREATE TABLE einvoices (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    sales_document_id UNIQUEIDENTIFIER NOT NULL,
+    irn NVARCHAR(100) NOT NULL,
+    ack_no NVARCHAR(50) NOT NULL,
+    ack_date DATETIME2 NOT NULL,
+    signed_invoice NVARCHAR(MAX) NOT NULL,
+    signed_qr_code NVARCHAR(MAX) NOT NULL,
+    status INT NOT NULL,
+    cancel_reason INT NULL,
+    cancel_remarks NVARCHAR(500) NULL,
+    cancelled_at_utc DATETIME2 NULL,
+    created_at_utc DATETIME2 NOT NULL,
+    updated_at_utc DATETIME2 NULL
+);
+
 IF NOT EXISTS (SELECT * FROM syscolumns WHERE id=OBJECT_ID('sales_documents') AND name='paid_amount')
 ALTER TABLE sales_documents ADD paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0;
 
@@ -622,6 +685,67 @@ CREATE TABLE IF NOT EXISTS gst_return_filings (
     created_at_utc TEXT NOT NULL,
     updated_at_utc TEXT NOT NULL,
     filed_at_utc TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS eway_bills (
+    id TEXT PRIMARY KEY,
+    sales_document_id TEXT NOT NULL,
+    eway_bill_number TEXT NOT NULL,
+    eway_bill_date TEXT NOT NULL,
+    valid_until TEXT NOT NULL,
+    status INTEGER NOT NULL,
+    supply_type INTEGER NOT NULL,
+    sub_supply_type INTEGER NOT NULL,
+    doc_type TEXT NOT NULL,
+    doc_number TEXT NOT NULL,
+    doc_date TEXT NOT NULL,
+    from_gstin TEXT NOT NULL,
+    from_name TEXT NOT NULL,
+    from_address TEXT NOT NULL,
+    from_place TEXT NOT NULL,
+    from_pincode TEXT NOT NULL,
+    from_state_code TEXT NOT NULL,
+    to_gstin TEXT NULL,
+    to_name TEXT NOT NULL,
+    to_address TEXT NOT NULL,
+    to_place TEXT NOT NULL,
+    to_pincode TEXT NOT NULL,
+    to_state_code TEXT NOT NULL,
+    total_invoice_value NUMERIC NOT NULL DEFAULT 0,
+    taxable_amount NUMERIC NOT NULL DEFAULT 0,
+    cgst_amount NUMERIC NOT NULL DEFAULT 0,
+    sgst_amount NUMERIC NOT NULL DEFAULT 0,
+    igst_amount NUMERIC NOT NULL DEFAULT 0,
+    cess_amount NUMERIC NOT NULL DEFAULT 0,
+    transportation_mode INTEGER NOT NULL DEFAULT 1,
+    transporter_id TEXT NULL,
+    transporter_name TEXT NULL,
+    transport_doc_no TEXT NULL,
+    transport_doc_date TEXT NULL,
+    vehicle_no TEXT NULL,
+    vehicle_type INTEGER NOT NULL DEFAULT 1,
+    approximate_distance_km INTEGER NOT NULL DEFAULT 10,
+    cancel_reason TEXT NULL,
+    cancel_remarks TEXT NULL,
+    cancelled_at_utc TEXT NULL,
+    created_at_utc TEXT NOT NULL,
+    updated_at_utc TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS einvoices (
+    id TEXT PRIMARY KEY,
+    sales_document_id TEXT NOT NULL,
+    irn TEXT NOT NULL,
+    ack_no TEXT NOT NULL,
+    ack_date TEXT NOT NULL,
+    signed_invoice TEXT NOT NULL,
+    signed_qr_code TEXT NOT NULL,
+    status INTEGER NOT NULL,
+    cancel_reason INTEGER NULL,
+    cancel_remarks TEXT NULL,
+    cancelled_at_utc TEXT NULL,
+    created_at_utc TEXT NOT NULL,
+    updated_at_utc TEXT NULL
 );
 ";
         await conn.ExecuteAsync(sql);
@@ -903,6 +1027,67 @@ CREATE TABLE IF NOT EXISTS gst_return_filings (
     created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
     filed_at_utc TIMESTAMP WITH TIME ZONE NULL
+);
+
+CREATE TABLE IF NOT EXISTS eway_bills (
+    id UUID PRIMARY KEY,
+    sales_document_id UUID NOT NULL,
+    eway_bill_number VARCHAR(20) NOT NULL,
+    eway_bill_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    valid_until TIMESTAMP WITH TIME ZONE NOT NULL,
+    status INT NOT NULL,
+    supply_type INT NOT NULL,
+    sub_supply_type INT NOT NULL,
+    doc_type VARCHAR(20) NOT NULL,
+    doc_number VARCHAR(50) NOT NULL,
+    doc_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    from_gstin VARCHAR(15) NOT NULL,
+    from_name VARCHAR(200) NOT NULL,
+    from_address VARCHAR(500) NOT NULL,
+    from_place VARCHAR(100) NOT NULL,
+    from_pincode VARCHAR(10) NOT NULL,
+    from_state_code VARCHAR(2) NOT NULL,
+    to_gstin VARCHAR(15) NULL,
+    to_name VARCHAR(200) NOT NULL,
+    to_address VARCHAR(500) NOT NULL,
+    to_place VARCHAR(100) NOT NULL,
+    to_pincode VARCHAR(10) NOT NULL,
+    to_state_code VARCHAR(2) NOT NULL,
+    total_invoice_value DECIMAL(18,2) NOT NULL DEFAULT 0,
+    taxable_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    transportation_mode INT NOT NULL DEFAULT 1,
+    transporter_id VARCHAR(50) NULL,
+    transporter_name VARCHAR(200) NULL,
+    transport_doc_no VARCHAR(50) NULL,
+    transport_doc_date TIMESTAMP WITH TIME ZONE NULL,
+    vehicle_no VARCHAR(50) NULL,
+    vehicle_type INT NOT NULL DEFAULT 1,
+    approximate_distance_km INT NOT NULL DEFAULT 10,
+    cancel_reason VARCHAR(100) NULL,
+    cancel_remarks VARCHAR(500) NULL,
+    cancelled_at_utc TIMESTAMP WITH TIME ZONE NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at_utc TIMESTAMP WITH TIME ZONE NULL
+);
+
+CREATE TABLE IF NOT EXISTS einvoices (
+    id UUID PRIMARY KEY,
+    sales_document_id UUID NOT NULL,
+    irn VARCHAR(100) NOT NULL,
+    ack_no VARCHAR(50) NOT NULL,
+    ack_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    signed_invoice TEXT NOT NULL,
+    signed_qr_code TEXT NOT NULL,
+    status INT NOT NULL,
+    cancel_reason INT NULL,
+    cancel_remarks VARCHAR(500) NULL,
+    cancelled_at_utc TIMESTAMP WITH TIME ZONE NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at_utc TIMESTAMP WITH TIME ZONE NULL
 );
 ";
         await conn.ExecuteAsync(sql);

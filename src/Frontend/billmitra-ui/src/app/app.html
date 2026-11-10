@@ -119,7 +119,7 @@
       </nav>
 
       <div class="bm-sidebar-footer" *ngIf="!isSidebarCollapsed">
-        <span class="bm-footer-version">v0.6.0-beta (MVP-5)</span>
+        <span class="bm-footer-version">v0.7.0-beta (MVP-6)</span>
         <span class="bm-footer-mode">Offline First</span>
       </div>
     </aside>
@@ -136,6 +136,8 @@
       <app-invoice-list (createNew)="openNewInvoice()" (editInvoice)="openEditInvoice($event)"></app-invoice-list>
       } @else if (activeMenu === 'gst') {
       <app-gst-returns></app-gst-returns>
+      } @else if (activeMenu === 'eway') {
+      <app-eway-invoice></app-eway-invoice>
       } @else if (activeMenu === 'settings') {
       <app-company-settings></app-company-settings>
       } @else if (activeMenu === 'new-invoice') {

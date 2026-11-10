@@ -11,6 +11,7 @@ import { PaymentListComponent } from './features/payments/payment-list.component
 import { PartyLedgerComponent } from './features/payments/party-ledger.component';
 import { CompanySettingsComponent } from './features/setup/company-settings.component';
 import { GstReturnsComponent } from './features/gst/gst-returns.component';
+import { EWayInvoiceComponent } from './features/eway-invoice/eway-invoice.component';
 import { BmDialogComponent } from './shared/components/bm-dialog.component';
 import {
   BmButtonDirective,
@@ -39,6 +40,7 @@ import {
     PartyLedgerComponent,
     CompanySettingsComponent,
     GstReturnsComponent,
+    EWayInvoiceComponent,
     BmDialogComponent,
     BmButtonDirective,
     BmPanelDirective,
