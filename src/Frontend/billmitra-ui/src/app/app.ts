@@ -15,6 +15,7 @@ import { EWayInvoiceComponent } from './features/eway-invoice/eway-invoice.compo
 import { PurchaseListComponent } from './features/purchases/purchase-list.component';
 import { ExpenseListComponent } from './features/expenses/expense-list.component';
 import { InventoryDashboardComponent } from './features/inventory/inventory-dashboard.component';
+import { ReportsDashboardComponent } from './features/reports/reports-dashboard.component';
 import { BmDialogComponent } from './shared/components/bm-dialog.component';
 import {
   BmButtonDirective,
@@ -47,6 +48,7 @@ import {
     PurchaseListComponent,
     ExpenseListComponent,
     InventoryDashboardComponent,
+    ReportsDashboardComponent,
     BmDialogComponent,
     BmButtonDirective,
     BmPanelDirective,

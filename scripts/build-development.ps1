@@ -3,7 +3,7 @@
 
 param(
     [string]$Configuration = "Release",
-    [string]$SemanticVersion = "0.9.0-beta.1"
+    [string]$SemanticVersion = "0.10.0-beta.1"
 )
 
 $ErrorActionPreference = "Stop"

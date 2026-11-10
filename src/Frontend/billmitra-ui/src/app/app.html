@@ -113,6 +113,12 @@
           <span class="bm-nav-label">Party Ledgers & Aging</span>
         </a>
 
+        <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">REPORTS & ANALYTICS</div>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'reports'" (click)="setActiveMenu('reports')">
+          <i class="pi pi-chart-line"></i>
+          <span class="bm-nav-label">Executive Reports</span>
+        </a>
+
         <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">STATUTORY & SYSTEM</div>
         <a class="bm-nav-item" [class.active]="activeMenu === 'gst'" (click)="setActiveMenu('gst')">
           <i class="pi pi-chart-bar"></i>
@@ -133,7 +139,7 @@
       </nav>
 
       <div class="bm-sidebar-footer" *ngIf="!isSidebarCollapsed">
-        <span class="bm-footer-version">v0.9.0-beta (MVP-8)</span>
+        <span class="bm-footer-version">v0.10.0-beta (MVP-9)</span>
         <span class="bm-footer-mode">Offline First</span>
       </div>
     </aside>
@@ -144,6 +150,8 @@
       <app-product-list></app-product-list>
       } @else if (activeMenu === 'inventory') {
       <app-inventory-dashboard></app-inventory-dashboard>
+      } @else if (activeMenu === 'reports') {
+      <app-reports-dashboard></app-reports-dashboard>
       } @else if (activeMenu === 'parties') {
       <app-party-list></app-party-list>
       } @else if (activeMenu === 'invoices') {
@@ -161,7 +169,8 @@
       } @else if (activeMenu === 'settings') {
       <app-company-settings></app-company-settings>
       } @else if (activeMenu === 'new-invoice') {
-      <app-invoice-editor [editingId]="activeInvoiceId" (navigateBack)="setActiveMenu('invoices')" (invoiceSaved)="setActiveMenu('invoices')"></app-invoice-editor>
+      <app-invoice-editor [editingId]="activeInvoiceId" (navigateBack)="setActiveMenu('invoices')"
+        (invoiceSaved)="setActiveMenu('invoices')"></app-invoice-editor>
       } @else if (activeMenu === 'payments') {
       <app-payment-list (openPartyLedger)="setActiveMenu('party-ledger')"></app-payment-list>
       } @else if (activeMenu === 'party-ledger') {
