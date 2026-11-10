@@ -39,6 +39,7 @@ public class DatabaseInitializer
 
             // Seed default units if empty
             await SeedDefaultUnitsAsync(connection);
+            await SeedDefaultExpenseCategoriesAsync(connection);
 
             _logger.LogInformation("Core schema verified successfully.");
         }
@@ -69,6 +70,37 @@ public class DatabaseInitializer
             {
                 await conn.ExecuteAsync("INSERT INTO units (id, code, name, is_active) VALUES (@Id, @Code, @Name, @IsActive)", u);
             }
+        }
+    }
+
+    private static async Task SeedDefaultExpenseCategoriesAsync(IDbConnection conn)
+    {
+        try
+        {
+            var count = await conn.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM expense_categories");
+            if (count == 0)
+            {
+                var defaultCategories = new[]
+                {
+                    new { Id = Guid.NewGuid(), Name = "Office Rent", Description = "Commercial premises rent", IsActive = 1, CreatedAt = DateTime.UtcNow },
+                    new { Id = Guid.NewGuid(), Name = "Electricity & Utilities", Description = "Electricity, water, and internet bills", IsActive = 1, CreatedAt = DateTime.UtcNow },
+                    new { Id = Guid.NewGuid(), Name = "Logistics & Freight", Description = "Inward transport, delivery, and courier", IsActive = 1, CreatedAt = DateTime.UtcNow },
+                    new { Id = Guid.NewGuid(), Name = "Professional Fees", Description = "Legal, audit, and tax consulting", IsActive = 1, CreatedAt = DateTime.UtcNow },
+                    new { Id = Guid.NewGuid(), Name = "Office Supplies", Description = "Stationery, packaging, and tea/coffee", IsActive = 1, CreatedAt = DateTime.UtcNow },
+                    new { Id = Guid.NewGuid(), Name = "Repairs & Maintenance", Description = "Equipment, AC, and fixture repairs", IsActive = 1, CreatedAt = DateTime.UtcNow },
+                    new { Id = Guid.NewGuid(), Name = "Marketing & Promotion", Description = "Advertisements, banners, and digital marketing", IsActive = 1, CreatedAt = DateTime.UtcNow },
+                    new { Id = Guid.NewGuid(), Name = "Miscellaneous", Description = "General day-to-day incidental expenses", IsActive = 1, CreatedAt = DateTime.UtcNow }
+                };
+
+                foreach (var c in defaultCategories)
+                {
+                    await conn.ExecuteAsync("INSERT INTO expense_categories (id, name, description, is_active, created_at_utc) VALUES (@Id, @Name, @Description, @IsActive, @CreatedAt)", c);
+                }
+            }
+        }
+        catch
+        {
+            // Table may not yet be initialized in special scenarios
         }
     }
 
@@ -413,6 +445,96 @@ CREATE TABLE einvoices (
     updated_at_utc DATETIME2 NULL
 );
 
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='purchase_documents' AND xtype='U')
+CREATE TABLE purchase_documents (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    company_id UNIQUEIDENTIFIER NOT NULL,
+    supplier_id UNIQUEIDENTIFIER NULL,
+    supplier_name NVARCHAR(200) NOT NULL,
+    supplier_gstin NVARCHAR(15) NULL,
+    supplier_address NVARCHAR(500) NULL,
+    supplier_state_code NVARCHAR(2) NOT NULL,
+    place_of_supply_state_code NVARCHAR(2) NOT NULL,
+    supply_type INT NOT NULL DEFAULT 1,
+    document_type INT NOT NULL DEFAULT 2,
+    document_status INT NOT NULL DEFAULT 1,
+    purchase_order_number NVARCHAR(50) NULL,
+    supplier_invoice_number NVARCHAR(50) NOT NULL,
+    supplier_invoice_date DATETIME2 NOT NULL,
+    document_date DATETIME2 NOT NULL,
+    due_date DATETIME2 NULL,
+    is_reverse_charge BIT NOT NULL DEFAULT 0,
+    default_itc_eligibility INT NOT NULL DEFAULT 1,
+    sub_total_taxable DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cgst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_tax DECIMAL(18,2) NOT NULL DEFAULT 0,
+    round_off_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    grand_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    notes NVARCHAR(MAX) NULL,
+    created_at_utc DATETIME2 NOT NULL,
+    finalized_at_utc DATETIME2 NULL,
+    cancelled_at_utc DATETIME2 NULL,
+    cancellation_reason NVARCHAR(500) NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='purchase_document_items' AND xtype='U')
+CREATE TABLE purchase_document_items (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    purchase_document_id UNIQUEIDENTIFIER NOT NULL,
+    product_id UNIQUEIDENTIFIER NULL,
+    item_name NVARCHAR(200) NOT NULL,
+    hsn_code NVARCHAR(10) NOT NULL,
+    quantity DECIMAL(18,3) NOT NULL,
+    unit NVARCHAR(10) NOT NULL DEFAULT 'NOS',
+    unit_price DECIMAL(18,2) NOT NULL,
+    discount_percent DECIMAL(18,2) NOT NULL DEFAULT 0,
+    discount_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    gst_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    taxable_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cgst_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    itc_eligibility INT NOT NULL DEFAULT 1
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='expense_categories' AND xtype='U')
+CREATE TABLE expense_categories (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    name NVARCHAR(100) NOT NULL,
+    description NVARCHAR(255) NULL,
+    is_active BIT NOT NULL DEFAULT 1,
+    created_at_utc DATETIME2 NOT NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='expense_entries' AND xtype='U')
+CREATE TABLE expense_entries (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    company_id UNIQUEIDENTIFIER NOT NULL,
+    expense_category_id UNIQUEIDENTIFIER NOT NULL,
+    expense_category_name NVARCHAR(100) NOT NULL,
+    voucher_number NVARCHAR(50) NOT NULL,
+    expense_date DATETIME2 NOT NULL,
+    amount DECIMAL(18,2) NOT NULL,
+    gst_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    gst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    is_itc_claimable BIT NOT NULL DEFAULT 0,
+    payment_mode INT NOT NULL DEFAULT 1,
+    reference_number NVARCHAR(50) NULL,
+    payee_name NVARCHAR(150) NULL,
+    notes NVARCHAR(MAX) NULL,
+    created_at_utc DATETIME2 NOT NULL
+);
+
 IF NOT EXISTS (SELECT * FROM syscolumns WHERE id=OBJECT_ID('sales_documents') AND name='paid_amount')
 ALTER TABLE sales_documents ADD paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0;
 
@@ -746,6 +868,92 @@ CREATE TABLE IF NOT EXISTS einvoices (
     cancelled_at_utc TEXT NULL,
     created_at_utc TEXT NOT NULL,
     updated_at_utc TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS purchase_documents (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL,
+    supplier_id TEXT NULL,
+    supplier_name TEXT NOT NULL,
+    supplier_gstin TEXT NULL,
+    supplier_address TEXT NULL,
+    supplier_state_code TEXT NOT NULL,
+    place_of_supply_state_code TEXT NOT NULL,
+    supply_type INTEGER NOT NULL DEFAULT 1,
+    document_type INTEGER NOT NULL DEFAULT 2,
+    document_status INTEGER NOT NULL DEFAULT 1,
+    purchase_order_number TEXT NULL,
+    supplier_invoice_number TEXT NOT NULL,
+    supplier_invoice_date TEXT NOT NULL,
+    document_date TEXT NOT NULL,
+    due_date TEXT NULL,
+    is_reverse_charge INTEGER NOT NULL DEFAULT 0,
+    default_itc_eligibility INTEGER NOT NULL DEFAULT 1,
+    sub_total_taxable NUMERIC NOT NULL DEFAULT 0,
+    cgst_total NUMERIC NOT NULL DEFAULT 0,
+    sgst_total NUMERIC NOT NULL DEFAULT 0,
+    igst_total NUMERIC NOT NULL DEFAULT 0,
+    cess_total NUMERIC NOT NULL DEFAULT 0,
+    total_tax NUMERIC NOT NULL DEFAULT 0,
+    round_off_amount NUMERIC NOT NULL DEFAULT 0,
+    grand_total NUMERIC NOT NULL DEFAULT 0,
+    paid_amount NUMERIC NOT NULL DEFAULT 0,
+    notes TEXT NULL,
+    created_at_utc TEXT NOT NULL,
+    finalized_at_utc TEXT NULL,
+    cancelled_at_utc TEXT NULL,
+    cancellation_reason TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS purchase_document_items (
+    id TEXT PRIMARY KEY,
+    purchase_document_id TEXT NOT NULL,
+    product_id TEXT NULL,
+    item_name TEXT NOT NULL,
+    hsn_code TEXT NOT NULL,
+    quantity NUMERIC NOT NULL,
+    unit TEXT NOT NULL DEFAULT 'NOS',
+    unit_price NUMERIC NOT NULL,
+    discount_percent NUMERIC NOT NULL DEFAULT 0,
+    discount_amount NUMERIC NOT NULL DEFAULT 0,
+    gst_rate NUMERIC NOT NULL DEFAULT 0,
+    taxable_amount NUMERIC NOT NULL DEFAULT 0,
+    cgst_rate NUMERIC NOT NULL DEFAULT 0,
+    cgst_amount NUMERIC NOT NULL DEFAULT 0,
+    sgst_rate NUMERIC NOT NULL DEFAULT 0,
+    sgst_amount NUMERIC NOT NULL DEFAULT 0,
+    igst_rate NUMERIC NOT NULL DEFAULT 0,
+    igst_amount NUMERIC NOT NULL DEFAULT 0,
+    cess_rate NUMERIC NOT NULL DEFAULT 0,
+    cess_amount NUMERIC NOT NULL DEFAULT 0,
+    total_amount NUMERIC NOT NULL DEFAULT 0,
+    itc_eligibility INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS expense_categories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at_utc TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS expense_entries (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL,
+    expense_category_id TEXT NOT NULL,
+    expense_category_name TEXT NOT NULL,
+    voucher_number TEXT NOT NULL,
+    expense_date TEXT NOT NULL,
+    amount NUMERIC NOT NULL,
+    gst_rate NUMERIC NOT NULL DEFAULT 0,
+    gst_amount NUMERIC NOT NULL DEFAULT 0,
+    is_itc_claimable INTEGER NOT NULL DEFAULT 0,
+    payment_mode INTEGER NOT NULL DEFAULT 1,
+    reference_number TEXT NULL,
+    payee_name TEXT NULL,
+    notes TEXT NULL,
+    created_at_utc TEXT NOT NULL
 );
 ";
         await conn.ExecuteAsync(sql);
@@ -1088,6 +1296,92 @@ CREATE TABLE IF NOT EXISTS einvoices (
     cancelled_at_utc TIMESTAMP WITH TIME ZONE NULL,
     created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at_utc TIMESTAMP WITH TIME ZONE NULL
+);
+
+CREATE TABLE IF NOT EXISTS purchase_documents (
+    id UUID PRIMARY KEY,
+    company_id UUID NOT NULL,
+    supplier_id UUID NULL,
+    supplier_name VARCHAR(200) NOT NULL,
+    supplier_gstin VARCHAR(15) NULL,
+    supplier_address VARCHAR(500) NULL,
+    supplier_state_code VARCHAR(2) NOT NULL,
+    place_of_supply_state_code VARCHAR(2) NOT NULL,
+    supply_type INT NOT NULL DEFAULT 1,
+    document_type INT NOT NULL DEFAULT 2,
+    document_status INT NOT NULL DEFAULT 1,
+    purchase_order_number VARCHAR(50) NULL,
+    supplier_invoice_number VARCHAR(50) NOT NULL,
+    supplier_invoice_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    document_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    due_date TIMESTAMP WITH TIME ZONE NULL,
+    is_reverse_charge BOOLEAN NOT NULL DEFAULT FALSE,
+    default_itc_eligibility INT NOT NULL DEFAULT 1,
+    sub_total_taxable DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cgst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_tax DECIMAL(18,2) NOT NULL DEFAULT 0,
+    round_off_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    grand_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    notes TEXT NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
+    finalized_at_utc TIMESTAMP WITH TIME ZONE NULL,
+    cancelled_at_utc TIMESTAMP WITH TIME ZONE NULL,
+    cancellation_reason VARCHAR(500) NULL
+);
+
+CREATE TABLE IF NOT EXISTS purchase_document_items (
+    id UUID PRIMARY KEY,
+    purchase_document_id UUID NOT NULL,
+    product_id UUID NULL,
+    item_name VARCHAR(200) NOT NULL,
+    hsn_code VARCHAR(10) NOT NULL,
+    quantity DECIMAL(18,3) NOT NULL,
+    unit VARCHAR(10) NOT NULL DEFAULT 'NOS',
+    unit_price DECIMAL(18,2) NOT NULL,
+    discount_percent DECIMAL(18,2) NOT NULL DEFAULT 0,
+    discount_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    gst_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    taxable_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cgst_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    itc_eligibility INT NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS expense_categories (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS expense_entries (
+    id UUID PRIMARY KEY,
+    company_id UUID NOT NULL,
+    expense_category_id UUID NOT NULL,
+    expense_category_name VARCHAR(100) NOT NULL,
+    voucher_number VARCHAR(50) NOT NULL,
+    expense_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    amount DECIMAL(18,2) NOT NULL,
+    gst_rate DECIMAL(18,2) NOT NULL DEFAULT 0,
+    gst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    is_itc_claimable BOOLEAN NOT NULL DEFAULT FALSE,
+    payment_mode INT NOT NULL DEFAULT 1,
+    reference_number VARCHAR(50) NULL,
+    payee_name VARCHAR(150) NULL,
+    notes TEXT NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
 );
 ";
         await conn.ExecuteAsync(sql);

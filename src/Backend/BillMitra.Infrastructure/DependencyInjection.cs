@@ -40,6 +40,8 @@ public static class DependencyInjection
         services.AddScoped<IGstReturnRepository, GstReturnRepository>();
         services.AddScoped<IEWayBillRepository, EWayBillRepository>();
         services.AddScoped<IEInvoiceRepository, EInvoiceRepository>();
+        services.AddScoped<IPurchaseRepository, PurchaseRepository>();
+        services.AddScoped<IExpenseRepository, ExpenseRepository>();
         services.AddScoped<IGstReturnProvider, Services.SandboxGstReturnProvider>();
         services.AddScoped<IEWayBillProvider, Services.SandboxEWayBillProvider>();
         services.AddScoped<IEInvoiceProvider, Services.SandboxEInvoiceProvider>();

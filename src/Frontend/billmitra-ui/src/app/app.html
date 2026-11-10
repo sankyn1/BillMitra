@@ -89,6 +89,16 @@
           <span class="bm-nav-label">Credit & Debit Notes</span>
         </a>
 
+        <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">PURCHASES & EXPENSES</div>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'purchases'" (click)="setActiveMenu('purchases')">
+          <i class="pi pi-shopping-cart"></i>
+          <span class="bm-nav-label">Inward Purchases</span>
+        </a>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'expenses'" (click)="setActiveMenu('expenses')">
+          <i class="pi pi-wallet"></i>
+          <span class="bm-nav-label">Expenses & Cash</span>
+        </a>
+
         <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">PAYMENTS & LEDGERS</div>
         <a class="bm-nav-item" [class.active]="activeMenu === 'payments'" (click)="setActiveMenu('payments')">
           <i class="pi pi-credit-card"></i>
@@ -119,7 +129,7 @@
       </nav>
 
       <div class="bm-sidebar-footer" *ngIf="!isSidebarCollapsed">
-        <span class="bm-footer-version">v0.7.0-beta (MVP-6)</span>
+        <span class="bm-footer-version">v0.8.0-beta (MVP-7)</span>
         <span class="bm-footer-mode">Offline First</span>
       </div>
     </aside>
@@ -134,6 +144,10 @@
       <app-invoice-list (createNew)="openNewInvoice()" (editInvoice)="openEditInvoice($event)"></app-invoice-list>
       } @else if (activeMenu === 'quotations') {
       <app-invoice-list (createNew)="openNewInvoice()" (editInvoice)="openEditInvoice($event)"></app-invoice-list>
+      } @else if (activeMenu === 'purchases') {
+      <app-purchase-list></app-purchase-list>
+      } @else if (activeMenu === 'expenses') {
+      <app-expense-list></app-expense-list>
       } @else if (activeMenu === 'gst') {
       <app-gst-returns></app-gst-returns>
       } @else if (activeMenu === 'eway') {
