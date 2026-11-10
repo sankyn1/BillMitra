@@ -60,3 +60,4 @@ public readonly struct Money : IEquatable<Money>, IComparable<Money>
 
     public override string ToString() => $"{Currency} {Amount:N2}";
 }
+

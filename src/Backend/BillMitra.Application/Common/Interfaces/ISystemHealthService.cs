@@ -6,3 +6,4 @@ public interface ISystemHealthService
 {
     Task<SystemHealthDto> GetHealthStatusAsync(CancellationToken cancellationToken = default);
 }
+

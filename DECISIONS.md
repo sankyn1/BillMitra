@@ -65,3 +65,4 @@ Reason: Allows testing the compiled desktop executable and Angular UI without re
 Status: Accepted  
 Decision: Provide an 80mm thermal receipt PDF and print layout in MVP-3 alongside standard A4/A5 tax invoices.  
 Reason: Accommodates retail and counter billing users who require immediate thermal receipt printing without waiting for advanced POS features in MVP-12.
+

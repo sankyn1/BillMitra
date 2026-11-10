@@ -61,3 +61,4 @@ public class MoneyTests
         act.Should().Throw<DivideByZeroException>();
     }
 }
+

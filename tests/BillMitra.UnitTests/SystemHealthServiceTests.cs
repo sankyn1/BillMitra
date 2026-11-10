@@ -41,3 +41,4 @@ public class SystemHealthServiceTests
         health.DatabaseConnected.Should().BeFalse();
     }
 }
+

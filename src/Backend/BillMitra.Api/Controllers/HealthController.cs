@@ -45,3 +45,4 @@ public class HealthController : ControllerBase
         return StatusCode(StatusCodes.Status200OK, new { status = "Degraded", database = "Disconnected", note = "Application running offline" });
     }
 }
+

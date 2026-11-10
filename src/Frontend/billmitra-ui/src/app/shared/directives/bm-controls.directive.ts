@@ -41,3 +41,4 @@ export class BmBadgeDirective implements OnInit {
     }
   }
 }
+

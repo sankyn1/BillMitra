@@ -39,3 +39,4 @@ public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         content.Data!.AppName.Should().Be("BillMitra");
     }
 }
+

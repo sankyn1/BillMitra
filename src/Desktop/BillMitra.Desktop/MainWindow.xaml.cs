@@ -1,7 +1,8 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Windows;
+using System.Windows.Threading;
 using Microsoft.Web.WebView2.Core;
 
 namespace BillMitra.Desktop;
@@ -30,12 +31,21 @@ public partial class MainWindow : Window
             await InitializeWebViewAsync();
 
             StatusText.Text = "Loading BillMitra workspace...";
-            AppWebView.Source = new Uri(ApiBaseUrl);
-            AppWebView.NavigationCompleted += (s, args) =>
+
+            // Hook navigation completion BEFORE navigating to avoid race condition
+            AppWebView.NavigationCompleted += OnNavigationCompleted;
+
+            // Safety fallback timer: ensure splash overlay is removed even if event is delayed
+            var fallbackTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            fallbackTimer.Tick += (s, args) =>
             {
-                SplashOverlay.Visibility = Visibility.Collapsed;
-                AppWebView.Visibility = Visibility.Visible;
+                fallbackTimer.Stop();
+                ShowAppView();
             };
+            fallbackTimer.Start();
+
+            // Navigate WebView2
+            AppWebView.CoreWebView2.Navigate(ApiBaseUrl);
         }
         catch (Exception ex)
         {
@@ -46,6 +56,30 @@ public partial class MainWindow : Window
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
+    }
+
+    private void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+    {
+        if (e.IsSuccess)
+        {
+            ShowAppView();
+        }
+        else
+        {
+            Dispatcher.Invoke(() =>
+            {
+                StatusText.Text = $"Connecting to interface ({e.WebErrorStatus})...";
+            });
+        }
+    }
+
+    private void ShowAppView()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            SplashOverlay.Visibility = Visibility.Collapsed;
+            AppWebView.Visibility = Visibility.Visible;
+        });
     }
 
     private async Task EnsureBackendRunningAsync()
@@ -90,11 +124,6 @@ public partial class MainWindow : Window
                 await Task.Delay(500);
             }
         }
-        else
-        {
-            // If backend exe not found on disk, continue anyway and let WebView display instructions or offline status
-            Debug.WriteLine($"Backend binary not found at: {backendExe}");
-        }
     }
 
     private async Task<bool> IsApiRespondingAsync()
@@ -119,7 +148,7 @@ public partial class MainWindow : Window
         var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
         await AppWebView.EnsureCoreWebView2Async(env);
 
-        // Security settings
+        // Security & Developer settings
         AppWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
         AppWebView.CoreWebView2.Settings.AreDevToolsEnabled = true;
     }

@@ -54,3 +54,4 @@ export class BmPanelFooterDirective implements OnInit {
     this.renderer.addClass(this.el.nativeElement, 'bm-panel-footer');
   }
 }
+

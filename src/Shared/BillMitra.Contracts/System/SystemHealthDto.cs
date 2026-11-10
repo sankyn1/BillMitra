@@ -11,3 +11,4 @@ public class SystemHealthDto
     public DateTime ServerTimeUtc { get; set; } = DateTime.UtcNow;
     public TimeSpan Uptime { get; set; }
 }
+

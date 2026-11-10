@@ -92,55 +92,32 @@ Set-Content -Path (Join-Path $ArtifactsDir "version.json") -Value $VersionMetada
 
 # 6. Generate README-TESTING.md
 Write-Host "`n[6/6] Generating README-TESTING.md..." -ForegroundColor Yellow
-$ReadmeContent = @"
-# BillMitra – Development Testing Package (MVP-0)
+$ReadmePath = Join-Path $ArtifactsDir "README-TESTING.md"
+@"
+# BillMitra - Development Testing Package (MVP-0)
 
-**Package Version:** $SemanticVersion  
-**Build Date:** $([DateTime]::UtcNow.ToString("yyyy-MM-dd HH:mm:ss")) UTC  
-**Target Environment:** Windows 10/11 x64  
-
----
+- Package Version: $SemanticVersion
+- Target Environment: Windows 10/11 x64
 
 ## What This Package Delivers
-* **Native Desktop Executable:** ``BillMitra.exe`` (WPF + WebView2 container).
-* **Supervised Backend API:** Hosted under ``Backend/`` (ASP.NET Core .NET 10 Kestrel).
-* **Integrated Frontend UI:** Hosted under ``Frontend/`` (Angular 22 + PrimeNG + Centralized Directives).
-* **Automatic Child Process Supervision:** Launching ``BillMitra.exe`` starts the backend API on ``http://127.0.0.1:5000``, verifies health, and renders the application inside the native window.
-
----
+- Native Desktop Executable: BillMitra.exe (WPF + WebView2 container).
+- Supervised Backend API: Hosted under Backend/ (ASP.NET Core .NET 10 Kestrel).
+- Integrated Frontend UI: Hosted under Frontend/ (Angular 22 + PrimeNG + Centralized Directives).
+- Automatic Child Process Supervision: Launching BillMitra.exe starts the backend API on http://127.0.0.1:5000, verifies health, and renders the application inside the native window.
 
 ## Prerequisites
-1. **.NET 10 Runtime (Windows x64)** – installed on host.
-2. **Microsoft Edge WebView2 Runtime** – standard on Windows 10/11.
-3. **PostgreSQL 16+** (Optional for UI test, required for DB operations):
-   - Default Connection: ``Host=localhost;Port=5432;Database=billmitra_dev;Username=postgres;Password=postgres;``
-   - Connection strings can be customized in ``Backend/appsettings.json``.
-
----
+1. .NET 10 Runtime (Windows x64)
+2. Microsoft Edge WebView2 Runtime
+3. PostgreSQL 16+ (Optional for UI test, required for DB operations)
 
 ## How to Test This Build
-1. Navigate to:
-   ``artifacts\development\``
-2. Double-click:
-   ``BillMitra.exe``
-3. **Expected Behavior:**
-   - The desktop splash window appears and checks backend health.
-   - The child API process is started automatically on ``http://127.0.0.1:5000``.
-   - The commercial Angular dashboard loads inside the window with uniform header, collapsible sidebar, KPI cards, and diagnostics table.
-   - Live health probe reports API status.
-   - Exiting the window cleanly terminates the background API process.
-
----
-
-## Verification Endpoints
-* **Swagger Documentation:** ``http://127.0.0.1:5000/swagger``
-* **System Health Endpoint:** ``http://127.0.0.1:5000/api/v1/system/health``
-* **Simple Health Check:** ``http://127.0.0.1:5000/health``
-"@
-
-Set-Content -Path (Join-Path $ArtifactsDir "README-TESTING.md") -Value $ReadmeContent
+1. Navigate to artifacts\development\
+2. Double-click BillMitra.exe
+3. The desktop splash window appears, checks backend health, and loads the Angular dashboard.
+"@ | Set-Content -Path $ReadmePath -Encoding UTF8
 
 Write-Host "`n==========================================================" -ForegroundColor Green
 Write-Host " BUILD SUCCESSFUL! Development package generated at:" -ForegroundColor Green
 Write-Host " $ArtifactsDir\BillMitra.exe" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Green
+

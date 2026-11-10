@@ -9,3 +9,4 @@ public interface IDbConnectionFactory
     Task<bool> CanConnectAsync(CancellationToken cancellationToken = default);
     string ProviderName { get; }
 }
+

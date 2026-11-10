@@ -20,3 +20,4 @@ public class PagedResult<T>
         PageSize = pageSize;
     }
 }
+

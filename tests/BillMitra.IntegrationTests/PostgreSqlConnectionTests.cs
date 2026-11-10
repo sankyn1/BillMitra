@@ -44,3 +44,4 @@ public class PostgreSqlConnectionTests
         canConnect.Should().BeFalse("Unreachable database should report false gracefully.");
     }
 }
+

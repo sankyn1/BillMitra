@@ -48,3 +48,4 @@ export class BmTableCellDirective implements OnInit {
     }
   }
 }
+
