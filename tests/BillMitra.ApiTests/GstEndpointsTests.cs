@@ -120,3 +120,4 @@ public class GstEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
         historyBody!.Data.Should().Contain(f => f.TaxPeriod == period);
     }
 }
+

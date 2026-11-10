@@ -29,3 +29,4 @@ public class GstReturnFiling
         FilingStatus == GstFilingStatus.ReadyForSubmission ||
         FilingStatus == GstFilingStatus.Rejected;
 }
+

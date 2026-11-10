@@ -16,3 +16,4 @@ public interface IGstReturnRepository
     Task<IReadOnlyList<GstReturnFiling>> GetFilingHistoryAsync(Guid companyId, CancellationToken ct = default);
     Task<IReadOnlyList<SalesDocument>> GetFinalizedDocumentsForPeriodAsync(Guid companyId, DateTime startDate, DateTime endDate, CancellationToken ct = default);
 }
+

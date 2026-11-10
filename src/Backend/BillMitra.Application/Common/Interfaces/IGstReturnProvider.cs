@@ -36,3 +36,4 @@ public interface IGstReturnProvider
     Task<GstProviderSubmissionResult> SubmitReturnAsync(GstReturnFiling filing, CancellationToken ct = default);
     Task<GstProviderStatusResult> CheckStatusAsync(string providerReference, CancellationToken ct = default);
 }
+

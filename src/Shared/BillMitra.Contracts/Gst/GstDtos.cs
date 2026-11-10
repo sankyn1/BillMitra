@@ -366,3 +366,4 @@ public sealed class Gstr1JsonDocRow
     public int canc { get; set; }
     public int net_issue { get; set; }
 }
+

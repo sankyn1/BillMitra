@@ -17,3 +17,4 @@ public interface IGstReturnService
     Task<GstReturnFilingDto> SubmitGstr1Async(string taxPeriod, bool simulate = true, CancellationToken ct = default);
     Task<GstReturnFilingDto> MarkAsFiledAsync(Guid filingId, string arn, DateTime arnDate, CancellationToken ct = default);
 }
+
