@@ -3,6 +3,7 @@
 > **Commercial-Grade, Offline-First Windows GST Billing, Inventory & Business Management Platform**  
 > *Engineered for Indian MSMEs, Traders, Retailers, Wholesalers & Service Providers.*
 
+[![Website](https://img.shields.io/badge/Website-sankyn1.github.io%2FBillMitra-2563EB?logo=googlechrome&logoColor=white)](https://sankyn1.github.io/BillMitra/)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![Angular 22](https://img.shields.io/badge/Angular-22.0-DD0031?logo=angular&logoColor=white)](https://angular.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
