@@ -9,7 +9,7 @@
 
 ## 1. Documentation Files Successfully Inspected and Audited
 
-The entire documentation pack located in `Antigravity_Billing_Blueprint` was read and analyzed in its entirety:
+The entire documentation pack located in `docs` was read and analyzed in its entirety:
 
 | Document File | Purpose / Scope in Blueprint | Audit Status |
 | :--- | :--- | :--- |
