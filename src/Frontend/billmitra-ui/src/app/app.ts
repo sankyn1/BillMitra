@@ -16,6 +16,7 @@ import { PurchaseListComponent } from './features/purchases/purchase-list.compon
 import { ExpenseListComponent } from './features/expenses/expense-list.component';
 import { InventoryDashboardComponent } from './features/inventory/inventory-dashboard.component';
 import { ReportsDashboardComponent } from './features/reports/reports-dashboard.component';
+import { BackupRestoreComponent } from './features/backups/backup-restore.component';
 import { BmDialogComponent } from './shared/components/bm-dialog.component';
 import {
   BmButtonDirective,
@@ -49,6 +50,7 @@ import {
     ExpenseListComponent,
     InventoryDashboardComponent,
     ReportsDashboardComponent,
+    BackupRestoreComponent,
     BmDialogComponent,
     BmButtonDirective,
     BmPanelDirective,

@@ -41,6 +41,7 @@ public class DatabaseInitializer
             await SeedDefaultUnitsAsync(connection);
             await SeedDefaultExpenseCategoriesAsync(connection);
             await SeedDefaultWarehousesAsync(connection);
+            await SeedDefaultBackupConfigurationAsync(connection);
 
             _logger.LogInformation("Core schema verified successfully.");
         }
@@ -74,6 +75,30 @@ public class DatabaseInitializer
                 await conn.ExecuteAsync(@"
                     INSERT INTO warehouses (id, company_id, name, code, address, city, state_code, is_default, is_active, created_at_utc)
                     VALUES (@Id, @CompanyId, @Name, @Code, @Address, @City, @StateCode, @IsDefault, @IsActive, @CreatedAt)", defaultWarehouse);
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    private static async Task SeedDefaultBackupConfigurationAsync(IDbConnection conn)
+    {
+        try
+        {
+            var count = await conn.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM backup_configuration WHERE id = 1");
+            if (count == 0)
+            {
+                var defaultBackupDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "BillMitra",
+                    "Backups"
+                );
+
+                await conn.ExecuteAsync(@"
+                    INSERT INTO backup_configuration (id, auto_backup_on_startup, backup_folder_path, retention_count, last_backup_at_utc)
+                    VALUES (1, 1, @BackupFolder, 10, NULL)",
+                    new { BackupFolder = defaultBackupDir });
             }
         }
         catch
@@ -655,6 +680,28 @@ CREATE TABLE stock_transfers (
     created_at_utc DATETIME2 NOT NULL
 );
 
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='backup_records' AND xtype='U')
+CREATE TABLE backup_records (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    file_name NVARCHAR(260) NOT NULL,
+    file_path NVARCHAR(500) NOT NULL,
+    file_size_bytes BIGINT NOT NULL,
+    backup_type NVARCHAR(50) NOT NULL,
+    status NVARCHAR(50) NOT NULL,
+    created_at_utc DATETIME2 NOT NULL,
+    checksum NVARCHAR(128) NULL,
+    notes NVARCHAR(500) NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='backup_configuration' AND xtype='U')
+CREATE TABLE backup_configuration (
+    id INT PRIMARY KEY,
+    auto_backup_on_startup INT NOT NULL DEFAULT 1,
+    backup_folder_path NVARCHAR(500) NOT NULL,
+    retention_count INT NOT NULL DEFAULT 10,
+    last_backup_at_utc DATETIME2 NULL
+);
+
 IF NOT EXISTS (SELECT * FROM syscolumns WHERE id=OBJECT_ID('sales_documents') AND name='paid_amount')
 ALTER TABLE sales_documents ADD paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0;
 
@@ -1157,6 +1204,26 @@ CREATE TABLE IF NOT EXISTS stock_transfers (
     remarks TEXT NULL,
     transfer_date TEXT NOT NULL,
     created_at_utc TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS backup_records (
+    id TEXT PRIMARY KEY,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    file_size_bytes INTEGER NOT NULL,
+    backup_type TEXT NOT NULL,
+    status TEXT NOT NULL,
+    created_at_utc TEXT NOT NULL,
+    checksum TEXT NULL,
+    notes TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS backup_configuration (
+    id INTEGER PRIMARY KEY,
+    auto_backup_on_startup INTEGER NOT NULL DEFAULT 1,
+    backup_folder_path TEXT NOT NULL,
+    retention_count INTEGER NOT NULL DEFAULT 10,
+    last_backup_at_utc TEXT NULL
 );
 ";
         await conn.ExecuteAsync(sql);
@@ -1668,6 +1735,26 @@ CREATE TABLE IF NOT EXISTS stock_transfers (
     remarks VARCHAR(500) NULL,
     transfer_date TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS backup_records (
+    id UUID PRIMARY KEY,
+    file_name VARCHAR(260) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_size_bytes BIGINT NOT NULL,
+    backup_type VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
+    checksum VARCHAR(128) NULL,
+    notes VARCHAR(500) NULL
+);
+
+CREATE TABLE IF NOT EXISTS backup_configuration (
+    id INT PRIMARY KEY,
+    auto_backup_on_startup INT NOT NULL DEFAULT 1,
+    backup_folder_path VARCHAR(500) NOT NULL,
+    retention_count INT NOT NULL DEFAULT 10,
+    last_backup_at_utc TIMESTAMP WITH TIME ZONE NULL
 );
 ";
         await conn.ExecuteAsync(sql);

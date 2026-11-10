@@ -139,7 +139,7 @@
       </nav>
 
       <div class="bm-sidebar-footer" *ngIf="!isSidebarCollapsed">
-        <span class="bm-footer-version">v0.10.0-beta (MVP-9)</span>
+        <span class="bm-footer-version">v0.11.0-beta (MVP-10)</span>
         <span class="bm-footer-mode">Offline First</span>
       </div>
     </aside>
@@ -152,6 +152,8 @@
       <app-inventory-dashboard></app-inventory-dashboard>
       } @else if (activeMenu === 'reports') {
       <app-reports-dashboard></app-reports-dashboard>
+      } @else if (activeMenu === 'backup') {
+      <app-backup-restore></app-backup-restore>
       } @else if (activeMenu === 'parties') {
       <app-party-list></app-party-list>
       } @else if (activeMenu === 'invoices') {
