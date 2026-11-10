@@ -116,3 +116,4 @@ public class PartyRepository : IPartyRepository
         await connection.ExecuteAsync(sql, new { Id = id, Now = DateTime.UtcNow });
     }
 }
+

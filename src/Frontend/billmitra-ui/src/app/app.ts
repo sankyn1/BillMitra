@@ -5,6 +5,8 @@ import { SetupService } from './core/services/setup.service';
 import { SetupWizardComponent } from './features/setup/setup-wizard.component';
 import { ProductListComponent } from './features/masters/product-list.component';
 import { PartyListComponent } from './features/masters/party-list.component';
+import { InvoiceListComponent } from './features/sales/invoice-list.component';
+import { InvoiceEditorComponent } from './features/sales/invoice-editor.component';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -26,6 +28,8 @@ import {
     SetupWizardComponent,
     ProductListComponent,
     PartyListComponent,
+    InvoiceListComponent,
+    InvoiceEditorComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -46,6 +50,7 @@ export class App implements OnInit {
 
   protected isSidebarCollapsed = false;
   protected activeMenu = 'dashboard';
+  protected activeInvoiceId: string | null = null;
 
   ngOnInit(): void {
     this.refreshAll();
@@ -62,6 +67,19 @@ export class App implements OnInit {
 
   setActiveMenu(menu: string): void {
     this.activeMenu = menu;
+    if (menu !== 'new-invoice') {
+      this.activeInvoiceId = null;
+    }
+  }
+
+  openNewInvoice(): void {
+    this.activeInvoiceId = null;
+    this.activeMenu = 'new-invoice';
+  }
+
+  openEditInvoice(id: string): void {
+    this.activeInvoiceId = id;
+    this.activeMenu = 'new-invoice';
   }
 
   onSetupCompleted(): void {

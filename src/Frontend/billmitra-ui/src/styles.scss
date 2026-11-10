@@ -280,17 +280,21 @@ html, body {
 .bm-align-center { text-align: center; }
 
 /* -------------------------------------------------------------
-   DIRECTIVE STYLES: bmInput
+   DIRECTIVE STYLES: bmInput & bmSelect
    ------------------------------------------------------------- */
 .bm-input {
   width: 100%;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
+  font-family: inherit;
   border: 1px solid var(--bm-border-strong);
   border-radius: var(--bm-radius-md);
   background-color: #FFFFFF;
   color: var(--bm-text-primary);
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, background-color 0.15s ease-in-out;
+}
+.bm-input:hover:not(:disabled) {
+  border-color: #94A3B8;
 }
 .bm-input:focus {
   outline: none;
@@ -298,10 +302,82 @@ html, body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 .bm-input-invalid {
-  border-color: var(--bm-danger);
+  border-color: var(--bm-danger) !important;
 }
 .bm-input-invalid:focus {
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+}
+
+/* Sizing variations matching buttons */
+.bm-input-sm {
+  height: 32px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+}
+.bm-input-md {
+  height: 38px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+.bm-input-lg {
+  height: 44px;
+  padding: 0.625rem 1rem;
+  font-size: 0.9375rem;
+}
+
+/* Polished Modern Select Dropdowns */
+.bm-select,
+select.bm-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  padding-right: 2.25rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem 1rem;
+  background-color: #FFFFFF;
+  color: var(--bm-text-primary);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.bm-select:hover:not(:disabled),
+select.bm-input:hover:not(:disabled) {
+  border-color: #94A3B8;
+  background-color: #F8FAFC;
+}
+
+.bm-select:focus,
+select.bm-input:focus {
+  outline: none;
+  border-color: var(--bm-border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231E3A8A' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-color: #FFFFFF;
+}
+
+.bm-select:disabled,
+select.bm-input:disabled {
+  background-color: #F1F5F9;
+  color: #94A3B8;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.bm-select option,
+select.bm-input option {
+  padding: 0.6rem 0.8rem;
+  background-color: #FFFFFF;
+  color: var(--bm-text-primary);
+  font-size: 0.875rem;
+}
+
+.bm-select option:disabled,
+select.bm-input option:disabled {
+  color: #94A3B8;
+  font-style: italic;
 }
 
 /* -------------------------------------------------------------

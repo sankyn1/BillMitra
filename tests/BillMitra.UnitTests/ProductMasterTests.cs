@@ -34,3 +34,4 @@ public class ProductMasterTests
         Product.ValidGstRates.Contains(rate).Should().Be(expected);
     }
 }
+

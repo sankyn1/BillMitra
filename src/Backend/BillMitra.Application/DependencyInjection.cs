@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IFinancialYearService, FinancialYearService>();
         services.AddScoped<IMasterService, MasterService>();
+        services.AddScoped<ISalesService, SalesService>();
 
         return services;
     }

@@ -32,7 +32,7 @@ export class BmTableRowDirective implements OnInit {
 }
 
 @Directive({
-  selector: 'th[bmTableHeaderCell]',
+  selector: 'th[bmTableHeaderCell], th[bmHeaderCell]',
   standalone: true
 })
 export class BmTableHeaderCellDirective implements OnInit {
@@ -50,7 +50,7 @@ export class BmTableHeaderCellDirective implements OnInit {
 }
 
 @Directive({
-  selector: 'td[bmTableCell]',
+  selector: 'td[bmTableCell], td[bmCell]',
   standalone: true
 })
 export class BmTableCellDirective implements OnInit {

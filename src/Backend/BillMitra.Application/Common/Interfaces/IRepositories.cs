@@ -46,3 +46,18 @@ public interface IPartyRepository
     Task<Party> UpdateAsync(Party party, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }
+
+public interface ISalesDocumentRepository
+{
+    Task<SalesDocument?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SalesDocument>> GetAllAsync(int? documentType = null, int? status = null, DateTime? fromDate = null, DateTime? toDate = null, Guid? partyId = null, string? search = null, CancellationToken cancellationToken = default);
+    Task<SalesDocument> InsertAsync(SalesDocument doc, CancellationToken cancellationToken = default);
+    Task<SalesDocument> UpdateAsync(SalesDocument doc, CancellationToken cancellationToken = default);
+    Task<SalesDocument?> GetByIdempotencyKeyAsync(string idempotencyKey, CancellationToken cancellationToken = default);
+}
+
+public interface IDocumentSequenceRepository
+{
+    Task<DocumentSequence> GetOrCreateSequenceAsync(Guid financialYearId, BillMitra.Domain.Enums.DocumentType documentType, CancellationToken cancellationToken = default);
+    Task<string> AllocateNextNumberAsync(Guid financialYearId, BillMitra.Domain.Enums.DocumentType documentType, CancellationToken cancellationToken = default);
+}

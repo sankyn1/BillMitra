@@ -1,255 +1,262 @@
 @if (setupService.setupStatus() && !setupService.setupStatus()?.isCompleted) {
-  <app-setup-wizard (completed)="onSetupCompleted()"></app-setup-wizard>
+<app-setup-wizard (completed)="onSetupCompleted()"></app-setup-wizard>
 } @else {
-  <div class="bm-app-layout" [class.sidebar-collapsed]="isSidebarCollapsed">
-    <!-- Desktop App Header -->
-    <header class="bm-header">
-      <div class="bm-header-brand">
-        <button class="bm-sidebar-toggle" (click)="toggleSidebar()" title="Toggle Sidebar">
-          <i class="pi pi-bars"></i>
-        </button>
-        <div class="bm-brand-text">
-          <span class="bm-brand-title">BillMitra</span>
-          <span class="bm-brand-badge">GST Enterprise</span>
-        </div>
+<div class="bm-app-layout" [class.sidebar-collapsed]="isSidebarCollapsed">
+  <!-- Desktop App Header -->
+  <header class="bm-header">
+    <div class="bm-header-brand">
+      <button class="bm-sidebar-toggle" (click)="toggleSidebar()" title="Toggle Sidebar">
+        <i class="pi pi-bars"></i>
+      </button>
+      <div class="bm-brand-text">
+        <span class="bm-brand-title">BillMitra</span>
+        <span class="bm-brand-badge">GST Enterprise</span>
       </div>
-
-      <div class="bm-header-center">
-        <div class="bm-company-chip">
-          <i class="pi pi-building"></i>
-          <span>{{ setupService.setupStatus()?.companyName || 'BillMitra Business' }} ({{ setupService.setupStatus()?.stateName || 'Active' }})</span>
-          <span class="bm-fy-chip">FY {{ setupService.setupStatus()?.currentFinancialYear || '2026-27' }}</span>
-        </div>
-      </div>
-
-      <div class="bm-header-actions">
-        <!-- Live Health Status Badge -->
-        <div class="bm-health-status">
-          @if (systemService.isApiConnected()) {
-            @if (systemService.health()?.databaseConnected) {
-              <span bmBadge="success" [bmDot]="true">
-                Online ({{ systemService.health()?.databaseProvider || 'DB' }})
-              </span>
-            } @else {
-              <span bmBadge="warning" [bmDot]="true">
-                API Connected (DB Standby)
-              </span>
-            }
-          } @else {
-            <span bmBadge="danger" [bmDot]="true">
-              Local Service Standby
-            </span>
-          }
-        </div>
-
-        <button bmButton bmVariant="outline" bmSize="sm" (click)="refreshAll()" [disabled]="systemService.isLoading() || setupService.isLoading()">
-          <i class="pi pi-refresh" [class.pi-spin]="systemService.isLoading() || setupService.isLoading()"></i>
-          <span>Refresh</span>
-        </button>
-
-        <div class="bm-user-profile" title="Administrator">
-          <div class="bm-avatar">BM</div>
-        </div>
-      </div>
-    </header>
-
-    <div class="bm-body-container">
-      <!-- Left Sidebar Navigation -->
-      <aside class="bm-sidebar">
-        <nav class="bm-nav">
-          <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">MAIN</div>
-          <a class="bm-nav-item" [class.active]="activeMenu === 'dashboard'" (click)="setActiveMenu('dashboard')">
-            <i class="pi pi-th-large"></i>
-            <span class="bm-nav-label">Dashboard</span>
-          </a>
-
-          <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">MASTERS & CATALOG</div>
-          <a class="bm-nav-item" [class.active]="activeMenu === 'products'" (click)="setActiveMenu('products')">
-            <i class="pi pi-box"></i>
-            <span class="bm-nav-label">Products & Services</span>
-          </a>
-          <a class="bm-nav-item" [class.active]="activeMenu === 'parties'" (click)="setActiveMenu('parties')">
-            <i class="pi pi-users"></i>
-            <span class="bm-nav-label">Customers & Parties</span>
-          </a>
-
-          <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">BILLING & SALES</div>
-          <a class="bm-nav-item" [class.active]="activeMenu === 'invoices'" (click)="setActiveMenu('invoices')">
-            <i class="pi pi-file-edit"></i>
-            <span class="bm-nav-label">Tax Invoices</span>
-          </a>
-          <a class="bm-nav-item" [class.active]="activeMenu === 'quotations'" (click)="setActiveMenu('quotations')">
-            <i class="pi pi-file"></i>
-            <span class="bm-nav-label">Quotations / Proforma</span>
-          </a>
-          <a class="bm-nav-item" [class.active]="activeMenu === 'credit-notes'" (click)="setActiveMenu('credit-notes')">
-            <i class="pi pi-replay"></i>
-            <span class="bm-nav-label">Credit & Debit Notes</span>
-          </a>
-
-          <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">STATUTORY & SYSTEM</div>
-          <a class="bm-nav-item" [class.active]="activeMenu === 'gst'" (click)="setActiveMenu('gst')">
-            <i class="pi pi-chart-bar"></i>
-            <span class="bm-nav-label">GST Returns (GSTR-1/3B)</span>
-          </a>
-          <a class="bm-nav-item" [class.active]="activeMenu === 'eway'" (click)="setActiveMenu('eway')">
-            <i class="pi pi-truck"></i>
-            <span class="bm-nav-label">E-Way Bill & E-Invoice</span>
-          </a>
-          <a class="bm-nav-item" [class.active]="activeMenu === 'backup'" (click)="setActiveMenu('backup')">
-            <i class="pi pi-database"></i>
-            <span class="bm-nav-label">Backup & Restore</span>
-          </a>
-          <a class="bm-nav-item" [class.active]="activeMenu === 'settings'" (click)="setActiveMenu('settings')">
-            <i class="pi pi-cog"></i>
-            <span class="bm-nav-label">System Settings</span>
-          </a>
-        </nav>
-
-        <div class="bm-sidebar-footer" *ngIf="!isSidebarCollapsed">
-          <span class="bm-footer-version">v0.3.0-beta (MVP-2)</span>
-          <span class="bm-footer-mode">Offline First</span>
-        </div>
-      </aside>
-
-      <!-- Main Workspace Content -->
-      <main class="bm-main-content">
-        @if (activeMenu === 'products') {
-          <app-product-list></app-product-list>
-        } @else if (activeMenu === 'parties') {
-          <app-party-list></app-party-list>
-        } @else {
-          <!-- Dashboard Overview -->
-          <div class="bm-content-header">
-            <div>
-              <h1 class="bm-page-title">Executive Control Center</h1>
-              <p class="bm-page-subtitle">Commercial GST Billing, Real-Time Inventory & Operational Accounting Baseline</p>
-            </div>
-            <div class="bm-header-buttons">
-              <button bmButton bmVariant="outline" bmSize="md" (click)="setActiveMenu('products')">
-                <i class="pi pi-box"></i>
-                <span>Open Item Master</span>
-              </button>
-              <button bmButton bmVariant="primary" bmSize="md" (click)="setActiveMenu('parties')">
-                <i class="pi pi-users"></i>
-                <span>Open Customer Master</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Quick KPI Stats Cards using bmPanel -->
-          <div class="bm-kpi-grid">
-            <div bmPanel bmElevation="sm" class="bm-kpi-card">
-              <div class="bm-kpi-icon-wrap bg-primary-light">
-                <i class="pi pi-file-edit text-primary"></i>
-              </div>
-              <div>
-                <div class="bm-kpi-title">Today's Billing</div>
-                <div class="bm-kpi-value">₹ 0.00</div>
-                <div class="bm-kpi-meta"><span class="text-success">Ready</span> for draft bills</div>
-              </div>
-            </div>
-
-            <div bmPanel bmElevation="sm" class="bm-kpi-card">
-              <div class="bm-kpi-icon-wrap bg-success-light">
-                <i class="pi pi-wallet text-success"></i>
-              </div>
-              <div>
-                <div class="bm-kpi-title">Receivables Outstanding</div>
-                <div class="bm-kpi-value">₹ 0.00</div>
-                <div class="bm-kpi-meta">All ledgers reconciled</div>
-              </div>
-            </div>
-
-            <div bmPanel bmElevation="sm" class="bm-kpi-card">
-              <div class="bm-kpi-icon-wrap bg-warning-light">
-                <i class="pi pi-box text-warning"></i>
-              </div>
-              <div>
-                <div class="bm-kpi-title">Stock Ledger Status</div>
-                <div class="bm-kpi-value">Catalog Active</div>
-                <div class="bm-kpi-meta">Central Warehouse active</div>
-              </div>
-            </div>
-
-            <div bmPanel bmElevation="sm" class="bm-kpi-card">
-              <div class="bm-kpi-icon-wrap bg-info-light">
-                <i class="pi pi-shield text-info"></i>
-              </div>
-              <div>
-                <div class="bm-kpi-title">GST Compliance Mode</div>
-                <div class="bm-kpi-value">Rule 46</div>
-                <div class="bm-kpi-meta">16-char atomic series ready</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- System Architecture & Verification Panel -->
-          <div class="bm-dashboard-grid">
-            <div bmPanel bmElevation="sm" class="bm-full-col">
-              <div bmPanelHeader>
-                <span><i class="pi pi-desktop mr-2"></i> System Diagnostics & Master Catalog Status</span>
-                <span bmBadge="info">MVP-2 Masters Active</span>
-              </div>
-              <div bmPanelBody>
-                <table bmTable [bmStriped]="true" [bmHover]="true">
-                  <thead>
-                    <tr>
-                      <th bmTableHeaderCell>Subsystem Layer</th>
-                      <th bmTableHeaderCell>Specification</th>
-                      <th bmTableHeaderCell>Runtime Technology</th>
-                      <th bmTableHeaderCell>Operational Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr bmTableRow>
-                      <td bmTableCell><strong>Desktop Shell</strong></td>
-                      <td bmTableCell>Native Windows Host Container</td>
-                      <td bmTableCell>WPF + WebView2 (.NET 10)</td>
-                      <td bmTableCell><span bmBadge="success" [bmDot]="true">Active Shell</span></td>
-                    </tr>
-                    <tr bmTableRow>
-                      <td bmTableCell><strong>Item Master</strong></td>
-                      <td bmTableCell>Products, Services & HSN Codes</td>
-                      <td bmTableCell>PostgreSQL / SQL Server / SQLite</td>
-                      <td bmTableCell><span bmBadge="success" [bmDot]="true">Active & Editable</span></td>
-                    </tr>
-                    <tr bmTableRow>
-                      <td bmTableCell><strong>Party Master</strong></td>
-                      <td bmTableCell>Customers, Suppliers & GSTINs</td>
-                      <td bmTableCell>Dapper Parameterized CRUD</td>
-                      <td bmTableCell><span bmBadge="success" [bmDot]="true">Active & Editable</span></td>
-                    </tr>
-                    <tr bmTableRow>
-                      <td bmTableCell><strong>Company Profile</strong></td>
-                      <td bmTableCell>GST Registration & Identity</td>
-                      <td bmTableCell>{{ setupService.setupStatus()?.gstin || 'GST Registered Entity' }}</td>
-                      <td bmTableCell><span bmBadge="success" [bmDot]="true">Configured</span></td>
-                    </tr>
-                    <tr bmTableRow>
-                      <td bmTableCell><strong>Financial Year</strong></td>
-                      <td bmTableCell>Indian Accounting Cycle</td>
-                      <td bmTableCell>FY {{ setupService.setupStatus()?.currentFinancialYear || '2026-27' }}</td>
-                      <td bmTableCell><span bmBadge="success" [bmDot]="true">Open & Active</span></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div bmPanelFooter>
-                <div class="bm-footer-actions">
-                  <span class="text-secondary text-sm">
-                    <i class="pi pi-info-circle mr-1"></i>
-                    Build Script: <code>scripts/build-development.ps1</code> produces <code>artifacts/development/BillMitra.exe</code>
-                  </span>
-                  <button bmButton bmVariant="secondary" bmSize="sm" (click)="refreshAll()">
-                    <i class="pi pi-sync"></i> Re-verify Connections
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        }
-      </main>
     </div>
+
+    <div class="bm-header-center">
+      <div class="bm-company-chip">
+        <i class="pi pi-building"></i>
+        <span>{{ setupService.setupStatus()?.companyName || 'BillMitra Business' }} ({{
+          setupService.setupStatus()?.stateName || 'Active' }})</span>
+        <span class="bm-fy-chip">FY {{ setupService.setupStatus()?.currentFinancialYear || '2026-27' }}</span>
+      </div>
+    </div>
+
+    <div class="bm-header-actions">
+      <!-- Live Health Status Badge -->
+      <div class="bm-health-status">
+        @if (systemService.isApiConnected()) {
+        @if (systemService.health()?.databaseConnected) {
+        <span bmBadge="success" [bmDot]="true">
+          Online ({{ systemService.health()?.databaseProvider || 'DB' }})
+        </span>
+        } @else {
+        <span bmBadge="warning" [bmDot]="true">
+          API Connected (DB Standby)
+        </span>
+        }
+        } @else {
+        <span bmBadge="danger" [bmDot]="true">
+          Local Service Standby
+        </span>
+        }
+      </div>
+
+      <button bmButton bmVariant="outline" bmSize="sm" (click)="refreshAll()"
+        [disabled]="systemService.isLoading() || setupService.isLoading()">
+        <i class="pi pi-refresh" [class.pi-spin]="systemService.isLoading() || setupService.isLoading()"></i>
+        <span>Refresh</span>
+      </button>
+
+      <div class="bm-user-profile" title="Administrator">
+        <div class="bm-avatar">BM</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="bm-body-container">
+    <!-- Left Sidebar Navigation -->
+    <aside class="bm-sidebar">
+      <nav class="bm-nav">
+        <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">MAIN</div>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'dashboard'" (click)="setActiveMenu('dashboard')">
+          <i class="pi pi-th-large"></i>
+          <span class="bm-nav-label">Dashboard</span>
+        </a>
+
+        <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">MASTERS & CATALOG</div>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'products'" (click)="setActiveMenu('products')">
+          <i class="pi pi-box"></i>
+          <span class="bm-nav-label">Products & Services</span>
+        </a>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'parties'" (click)="setActiveMenu('parties')">
+          <i class="pi pi-users"></i>
+          <span class="bm-nav-label">Customers & Parties</span>
+        </a>
+
+        <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">BILLING & SALES</div>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'invoices'" (click)="setActiveMenu('invoices')">
+          <i class="pi pi-file-edit"></i>
+          <span class="bm-nav-label">Tax Invoices</span>
+        </a>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'quotations'" (click)="setActiveMenu('quotations')">
+          <i class="pi pi-file"></i>
+          <span class="bm-nav-label">Quotations / Proforma</span>
+        </a>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'credit-notes'" (click)="setActiveMenu('credit-notes')">
+          <i class="pi pi-replay"></i>
+          <span class="bm-nav-label">Credit & Debit Notes</span>
+        </a>
+
+        <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">STATUTORY & SYSTEM</div>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'gst'" (click)="setActiveMenu('gst')">
+          <i class="pi pi-chart-bar"></i>
+          <span class="bm-nav-label">GST Returns (GSTR-1/3B)</span>
+        </a>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'eway'" (click)="setActiveMenu('eway')">
+          <i class="pi pi-truck"></i>
+          <span class="bm-nav-label">E-Way Bill & E-Invoice</span>
+        </a>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'backup'" (click)="setActiveMenu('backup')">
+          <i class="pi pi-database"></i>
+          <span class="bm-nav-label">Backup & Restore</span>
+        </a>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'settings'" (click)="setActiveMenu('settings')">
+          <i class="pi pi-cog"></i>
+          <span class="bm-nav-label">System Settings</span>
+        </a>
+      </nav>
+
+      <div class="bm-sidebar-footer" *ngIf="!isSidebarCollapsed">
+        <span class="bm-footer-version">v0.4.0-beta (MVP-3)</span>
+        <span class="bm-footer-mode">Offline First</span>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Content -->
+    <main class="bm-main-content">
+      @if (activeMenu === 'products') {
+      <app-product-list></app-product-list>
+      } @else if (activeMenu === 'parties') {
+      <app-party-list></app-party-list>
+      } @else if (activeMenu === 'invoices') {
+      <app-invoice-list (createNew)="openNewInvoice()" (editInvoice)="openEditInvoice($event)"></app-invoice-list>
+      } @else if (activeMenu === 'new-invoice') {
+      <app-invoice-editor [editingId]="activeInvoiceId" (navigateBack)="setActiveMenu('invoices')" (invoiceSaved)="setActiveMenu('invoices')"></app-invoice-editor>
+      } @else {
+      <!-- Dashboard Overview -->
+      <div class="bm-content-header">
+        <div>
+          <h1 class="bm-page-title">Executive Control Center</h1>
+          <p class="bm-page-subtitle">Commercial GST Billing, Real-Time Inventory & Operational Accounting Baseline</p>
+        </div>
+        <div class="bm-header-buttons">
+          <button bmButton bmVariant="outline" bmSize="md" (click)="setActiveMenu('products')">
+            <i class="pi pi-box"></i>
+            <span>Open Item Master</span>
+          </button>
+          <button bmButton bmVariant="primary" bmSize="md" (click)="setActiveMenu('parties')">
+            <i class="pi pi-users"></i>
+            <span>Open Customer Master</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick KPI Stats Cards using bmPanel -->
+      <div class="bm-kpi-grid">
+        <div bmPanel bmElevation="sm" class="bm-kpi-card">
+          <div class="bm-kpi-icon-wrap bg-primary-light">
+            <i class="pi pi-file-edit text-primary"></i>
+          </div>
+          <div>
+            <div class="bm-kpi-title">Today's Billing</div>
+            <div class="bm-kpi-value">₹ 0.00</div>
+            <div class="bm-kpi-meta"><span class="text-success">Ready</span> for draft bills</div>
+          </div>
+        </div>
+
+        <div bmPanel bmElevation="sm" class="bm-kpi-card">
+          <div class="bm-kpi-icon-wrap bg-success-light">
+            <i class="pi pi-wallet text-success"></i>
+          </div>
+          <div>
+            <div class="bm-kpi-title">Receivables Outstanding</div>
+            <div class="bm-kpi-value">₹ 0.00</div>
+            <div class="bm-kpi-meta">All ledgers reconciled</div>
+          </div>
+        </div>
+
+        <div bmPanel bmElevation="sm" class="bm-kpi-card">
+          <div class="bm-kpi-icon-wrap bg-warning-light">
+            <i class="pi pi-box text-warning"></i>
+          </div>
+          <div>
+            <div class="bm-kpi-title">Stock Ledger Status</div>
+            <div class="bm-kpi-value">Catalog Active</div>
+            <div class="bm-kpi-meta">Central Warehouse active</div>
+          </div>
+        </div>
+
+        <div bmPanel bmElevation="sm" class="bm-kpi-card">
+          <div class="bm-kpi-icon-wrap bg-info-light">
+            <i class="pi pi-shield text-info"></i>
+          </div>
+          <div>
+            <div class="bm-kpi-title">GST Compliance Mode</div>
+            <div class="bm-kpi-value">Rule 46</div>
+            <div class="bm-kpi-meta">16-char atomic series ready</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Architecture & Verification Panel -->
+      <div class="bm-dashboard-grid">
+        <div bmPanel bmElevation="sm" class="bm-full-col">
+          <div bmPanelHeader>
+            <span><i class="pi pi-desktop mr-2"></i> System Diagnostics & Master Catalog Status</span>
+            <span bmBadge="info">MVP-2 Masters Active</span>
+          </div>
+          <div bmPanelBody>
+            <table bmTable [bmStriped]="true" [bmHover]="true">
+              <thead>
+                <tr>
+                  <th bmTableHeaderCell>Subsystem Layer</th>
+                  <th bmTableHeaderCell>Specification</th>
+                  <th bmTableHeaderCell>Runtime Technology</th>
+                  <th bmTableHeaderCell>Operational Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr bmTableRow>
+                  <td bmTableCell><strong>Desktop Shell</strong></td>
+                  <td bmTableCell>Native Windows Host Container</td>
+                  <td bmTableCell>WPF + WebView2 (.NET 10)</td>
+                  <td bmTableCell><span bmBadge="success" [bmDot]="true">Active Shell</span></td>
+                </tr>
+                <tr bmTableRow>
+                  <td bmTableCell><strong>Item Master</strong></td>
+                  <td bmTableCell>Products, Services & HSN Codes</td>
+                  <td bmTableCell>PostgreSQL / SQL Server / SQLite</td>
+                  <td bmTableCell><span bmBadge="success" [bmDot]="true">Active & Editable</span></td>
+                </tr>
+                <tr bmTableRow>
+                  <td bmTableCell><strong>Party Master</strong></td>
+                  <td bmTableCell>Customers, Suppliers & GSTINs</td>
+                  <td bmTableCell>Dapper Parameterized CRUD</td>
+                  <td bmTableCell><span bmBadge="success" [bmDot]="true">Active & Editable</span></td>
+                </tr>
+                <tr bmTableRow>
+                  <td bmTableCell><strong>Company Profile</strong></td>
+                  <td bmTableCell>GST Registration & Identity</td>
+                  <td bmTableCell>{{ setupService.setupStatus()?.gstin || 'GST Registered Entity' }}</td>
+                  <td bmTableCell><span bmBadge="success" [bmDot]="true">Configured</span></td>
+                </tr>
+                <tr bmTableRow>
+                  <td bmTableCell><strong>Financial Year</strong></td>
+                  <td bmTableCell>Indian Accounting Cycle</td>
+                  <td bmTableCell>FY {{ setupService.setupStatus()?.currentFinancialYear || '2026-27' }}</td>
+                  <td bmTableCell><span bmBadge="success" [bmDot]="true">Open & Active</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div bmPanelFooter>
+            <div class="bm-footer-actions">
+              <span class="text-secondary text-sm">
+                <i class="pi pi-info-circle mr-1"></i>
+                Build Script: <code>scripts/build-development.ps1</code> produces
+                <code>artifacts/development/BillMitra.exe</code>
+              </span>
+              <button bmButton bmVariant="secondary" bmSize="sm" (click)="refreshAll()">
+                <i class="pi pi-sync"></i> Re-verify Connections
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      }
+    </main>
   </div>
+</div>
 }

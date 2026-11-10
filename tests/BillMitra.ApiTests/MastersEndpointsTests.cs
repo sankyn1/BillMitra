@@ -80,3 +80,4 @@ public class MastersEndpointsTests : IClassFixture<WebApplicationFactory<Program
         result.Data.Should().NotBeNull();
     }
 }
+

@@ -415,3 +415,4 @@ export class PartyListComponent implements OnInit {
     };
   }
 }
+

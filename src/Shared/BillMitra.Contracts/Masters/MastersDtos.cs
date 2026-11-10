@@ -111,3 +111,4 @@ public class ProductCsvImportRow
     public decimal GstRatePercent { get; set; }
     public decimal OpeningStock { get; set; }
 }
+

@@ -24,3 +24,4 @@ public interface IMasterService
     Task<PartyDto> UpdatePartyAsync(Guid id, CreateOrUpdatePartyRequest request, CancellationToken cancellationToken = default);
     Task DeletePartyAsync(Guid id, CancellationToken cancellationToken = default);
 }
+

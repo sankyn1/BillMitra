@@ -1,54 +1,48 @@
 # BillMitra – Project Status & Milestone Tracker
 
 **Current Date:** November 10, 2026  
-**Current State:** MVP-2 Completed – Ready for MVP-3  
+**Current State:** MVP-3 Completed – Ready for MVP-4  
 **Active Lead:** Principal Software Architect & Technical Lead (Antigravity)  
 
 ---
 
 ## 1. Executive Status Summary
 
-**MVP-2 (Masters & Catalog Management)** has been completely implemented, verified with automated tests, and packaged into the Day-1 runnable Windows executable (`artifacts/development/BillMitra.exe`).
+**MVP-3 (GST Calculation & Sales Documents Lifecycle)** has been completely implemented, verified with automated tests, and packaged into the Day-1 runnable Windows executable (`artifacts/development/BillMitra.exe`).
 
-### Key MVP-2 Accomplishments
-1. **Product & Service Catalog Domain**:
-   - `Product` entity with strict GST rate tier validation (`0%, 0.1%, 0.25%, 1.5%, 3%, 5%, 12%, 18%, 28%`).
-   - HSN/SAC code validation (2, 4, 6, or 8 digits in accordance with CBIC guidelines).
-   - Purchase price, selling price, barcode/SKU, opening stock, reorder level tracking, and tax inclusion flags.
-2. **Customer & Supplier (Party) Directory**:
-   - `Party` entity supporting Customer, Supplier, or Both.
-   - GSTIN format validation with automated State Code & 10-char PAN derivation.
-   - Credit limit enforcement, opening balance, and billing/shipping address synchronization.
-3. **UOM & Category Tax Standards**:
-   - Standard Indian GST Units of Measure (`PCS`, `BOX`, `KGS`, `MTR`, `NOS`, `BAG`, `SET`, `LTR`) pre-seeded automatically during schema initialization.
-   - Dynamic product category grouping.
-4. **Clean Design-System UI**:
-   - Generic directive-driven views: `product-list.component.ts` and `party-list.component.ts` using `[bmButton]`, `[bmPanel]`, `[bmTable]`, `[bmInput]`, `[bmBadge]`.
-   - Responsive search bar, category filtering, party type toggle, quick sample seed button, and modal dialog forms with real-time error handling.
-   - PrimeUI commercial license banner permanently eliminated (bundle size optimized by >150 kB).
-5. **REST API Endpoints**:
-   - `GET /api/v1/products` (with search and category filtering)
-   - `GET /api/v1/products/{id}`
-   - `POST /api/v1/products`
-   - `PUT /api/v1/products/{id}`
-   - `DELETE /api/v1/products/{id}`
-   - `GET /api/v1/products/units`
-   - `GET /api/v1/products/categories`
-   - `POST /api/v1/products/categories`
-   - `POST /api/v1/products/bulk-import`
-   - `GET /api/v1/parties` (with search and party-type filtering)
-   - `GET /api/v1/parties/{id}`
-   - `POST /api/v1/parties`
-   - `PUT /api/v1/parties/{id}`
-   - `DELETE /api/v1/parties/{id}`
-6. **Quality Assurance & Test Suite**:
-   - 36 Automated Tests Passing (100% Success Rate across Architecture, Unit, Integration, and API suites):
-     - Architecture Tests: 6 passed
-     - Unit Tests: 20 passed (including HSN validator & GST rate tier tests)
-     - Integration Tests: 2 passed
-     - API Contract Tests: 8 passed (including Product & Party lifecycle, rate rejection)
+### Key MVP-3 Accomplishments
+1. **Central GST Calculation Engine**:
+   * Intra-State (`CGST` + `SGST`, 50/50 split) vs. Inter-State (`IGST`) determination using Supplier State Code vs. Place of Supply (POS).
+   * Reverse Charge Mechanism (RCM) support.
+   * Line-item discounts, taxable value derivation, cess percentage handling.
+   * Nearest Rupee round-off calculation complying with Rule 46 of CGST Rules.
+   * Indian Currency to Words converter (`IndianCurrencyHelper.ConvertToWords`, e.g. *"Rupees One Lakh Six Thousand Two Hundred Only"*).
+2. **Statutory Document Numbering Engine**:
+   * Concurrency-safe atomic number allocation using pessimistic database locks (`document_sequences`).
+   * Rule 46 16-character maximum boundary enforcement (e.g. `INV/26-27/0001` - 14 chars).
+3. **Immutable Document Lifecycle & Snapshot**:
+   * States: `Draft` $\rightarrow$ `Finalized` $\rightarrow$ `Cancelled`.
+   * Finalized invoices freeze supplier, customer, items, and tax breakdown snapshots.
+   * Statutory preservation: finalized documents are never deleted; cancellation requires an audit reason and retains the number.
+   * Idempotency key support to eliminate duplicate invoice generation on retries.
+4. **QuestPDF Print & Export Engine**:
+   * Professional GST Tax Invoice in **A4** and **A5** formats with complete tax breakdown, bank details, and authorized signatory.
+   * **80mm POS Thermal Slip** format for retail counters (`format=thermal`).
+   * Built with bundled Lato typography.
+5. **Modern Generic UI & Dropdown Redesign**:
+   * Upgraded dropdown controls with dedicated `[bmSelect]` and `select[bmInput]` directive styling.
+   * Replaced raw OS chrome with brand-consistent SVG chevron arrows, hover effects, and focus glow.
+   * Interactive **Sales Invoice List (`app-invoice-list`)**: search, status filtering, type filtering, PDF download triggers, and cancel workflow.
+   * Fast **Billing Screen (`app-invoice-editor`)**: party picker with auto-filling, real-time GST recalculation, item grid with master product picker, and instant grand total summary.
+6. **Quality Assurance & Verification**:
+   * Automated test suite expanded to **41 passing tests** (100% success rate):
+     * Architecture Tests: 6 passed (Clean Architecture verified)
+     * Unit Tests: 25 passed (GST intra/inter state, rounding, currency to words, Rule 46 numbering, HSN validation, GST rate tiers, Password Hasher)
+     * Integration Tests: 2 passed (Dapper resiliency)
+     * API Contract Tests: 8 passed (Masters CRUD, Setup validation, Health probes)
+     * Sales API Tests: 3 passed (GST calculation, Draft $\rightarrow$ Finalize $\rightarrow$ PDF generation flow, Cancellation validation)
 7. **Continuous Executable Delivery**:
-   - Packaged and verified at `artifacts\development\BillMitra.exe`.
+   * Day-1 runnable Windows executable generated and verified at `artifacts\development\BillMitra.exe`.
 
 ---
 
@@ -60,8 +54,8 @@
 | **MVP-0** | **Engineering Foundation** | Solution scaffolding, Angular 22, WPF Shell, Dapper, Tests, Build Script | **COMPLETED** | `artifacts/development/BillMitra.exe` |
 | **MVP-1** | **Windows Shell & Setup** | First-run setup wizard, company initialization, admin credentials, data directories | **COMPLETED** | `artifacts/development/BillMitra.exe` |
 | **MVP-2** | **Masters & Catalog** | Products, categories, units, HSN/SAC, customers, suppliers, quick seeding | **COMPLETED** | `artifacts/development/BillMitra.exe` (v0.3.0) |
-| **MVP-3** | **GST Billing & Sales Docs** | Central GST calculator, atomic sequence numbering, immutable snapshots, QuestPDF | **IN PROGRESS** | Development Build v0.4.0 |
-| **MVP-4** | **Payments & Ledger** | Receipts, multi-invoice allocations, aging, customer/supplier ledgers | Queued | Development Build v0.5.0 |
+| **MVP-3** | **GST Billing & Sales Docs** | Central GST calculator, atomic sequence numbering, immutable snapshots, QuestPDF | **COMPLETED** | `artifacts/development/BillMitra.exe` (v0.4.0) |
+| **MVP-4** | **Payments & Ledger** | Receipts, multi-invoice allocations, aging, customer/supplier ledgers | **READY TO START** | Development Build v0.5.0 |
 | **MVP-5** | **GST Returns (GSTR-1/3B)** | GSTR-1 JSON export, GSTR-3B summary, HSN register, provider adapter baseline | Queued | Development Build v0.6.0 |
 | **MVP-6** | **E-Way Bill & E-Invoice** | E-Way Bill workflows, IRN generation, signed QR code rendering, IRP sandbox | Queued | Development Build v0.7.0 |
 | **MVP-7** | **Purchases & Expenses** | Inward purchase invoices, ITC eligibility, expense categorization | Queued | Development Build v0.8.0 |
@@ -79,13 +73,13 @@ Test run for BillMitra.ArchitectureTests.dll (net10.0)
 Passed! - Failed: 0, Passed: 6, Skipped: 0, Total: 6
 
 Test run for BillMitra.UnitTests.dll (net10.0)
-Passed! - Failed: 0, Passed: 20, Skipped: 0, Total: 20
+Passed! - Failed: 0, Passed: 25, Skipped: 0, Total: 25
 
 Test run for BillMitra.IntegrationTests.dll (net10.0)
 Passed! - Failed: 0, Passed: 2, Skipped: 0, Total: 2
 
 Test run for BillMitra.ApiTests.dll (net10.0)
-Passed! - Failed: 0, Passed: 8, Skipped: 0, Total: 8
+Passed! - Failed: 0, Passed: 11, Skipped: 0, Total: 11
 
-OVERALL RESULT: 36 Passed, 0 Failed, 0 Skipped (100% Success)
+OVERALL RESULT: 44 Passed, 0 Failed, 0 Skipped (100% Success)
 ```

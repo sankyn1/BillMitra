@@ -80,3 +80,4 @@ public class PartiesController : ControllerBase
         return Ok(ApiResponse<bool>.Ok(true, "Party marked as inactive."));
     }
 }
+

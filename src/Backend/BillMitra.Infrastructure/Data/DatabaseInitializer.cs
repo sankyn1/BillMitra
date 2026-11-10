@@ -201,6 +201,84 @@ CREATE TABLE parties (
     created_at_utc DATETIME2 NOT NULL,
     updated_at_utc DATETIME2 NOT NULL
 );
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='document_sequences' AND xtype='U')
+CREATE TABLE document_sequences (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    financial_year_id UNIQUEIDENTIFIER NOT NULL,
+    document_type INT NOT NULL,
+    prefix NVARCHAR(20) NOT NULL,
+    financial_year_token NVARCHAR(20) NOT NULL,
+    next_number BIGINT NOT NULL DEFAULT 1,
+    padding_length INT NOT NULL DEFAULT 4,
+    suffix NVARCHAR(20) NULL,
+    is_active BIT NOT NULL DEFAULT 1
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='sales_documents' AND xtype='U')
+CREATE TABLE sales_documents (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    document_type INT NOT NULL,
+    document_status INT NOT NULL,
+    document_number NVARCHAR(50) NULL,
+    draft_number NVARCHAR(50) NOT NULL,
+    document_date DATE NOT NULL,
+    due_date DATE NULL,
+    company_id UNIQUEIDENTIFIER NOT NULL,
+    party_id UNIQUEIDENTIFIER NULL,
+    customer_name NVARCHAR(200) NOT NULL,
+    customer_gstin NVARCHAR(15) NULL,
+    billing_address NVARCHAR(500) NULL,
+    shipping_address NVARCHAR(500) NULL,
+    place_of_supply_state_code NVARCHAR(2) NOT NULL,
+    supplier_state_code NVARCHAR(2) NOT NULL,
+    is_reverse_charge BIT NOT NULL DEFAULT 0,
+    supply_type INT NOT NULL DEFAULT 1,
+    currency_code NVARCHAR(3) NOT NULL DEFAULT 'INR',
+    sub_total_taxable DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cgst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_tax DECIMAL(18,2) NOT NULL DEFAULT 0,
+    round_off_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    grand_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_amount_in_words NVARCHAR(500) NOT NULL,
+    notes NVARCHAR(MAX) NULL,
+    terms_and_conditions NVARCHAR(MAX) NULL,
+    idempotency_key NVARCHAR(100) NULL,
+    created_at_utc DATETIME2 NOT NULL,
+    finalized_at_utc DATETIME2 NULL,
+    cancelled_at_utc DATETIME2 NULL,
+    cancellation_reason NVARCHAR(500) NULL,
+    created_by NVARCHAR(100) NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='sales_document_items' AND xtype='U')
+CREATE TABLE sales_document_items (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    sales_document_id UNIQUEIDENTIFIER NOT NULL,
+    product_id UNIQUEIDENTIFIER NULL,
+    line_number INT NOT NULL,
+    item_name NVARCHAR(200) NOT NULL,
+    hsn_sac_code NVARCHAR(10) NOT NULL,
+    quantity DECIMAL(18,3) NOT NULL,
+    unit_code NVARCHAR(10) NOT NULL,
+    unit_price DECIMAL(18,2) NOT NULL,
+    discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    discount_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    taxable_amount DECIMAL(18,2) NOT NULL,
+    gst_rate_percent DECIMAL(5,2) NOT NULL,
+    cgst_rate_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    cgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_rate_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    sgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_rate_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    igst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_rate_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    cess_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_amount DECIMAL(18,2) NOT NULL
+);
 ";
         await conn.ExecuteAsync(sql);
     }
@@ -325,6 +403,81 @@ CREATE TABLE IF NOT EXISTS parties (
     created_at_utc TEXT NOT NULL,
     updated_at_utc TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS document_sequences (
+    id TEXT PRIMARY KEY,
+    financial_year_id TEXT NOT NULL,
+    document_type INTEGER NOT NULL,
+    prefix TEXT NOT NULL,
+    financial_year_token TEXT NOT NULL,
+    next_number INTEGER NOT NULL DEFAULT 1,
+    padding_length INTEGER NOT NULL DEFAULT 4,
+    suffix TEXT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS sales_documents (
+    id TEXT PRIMARY KEY,
+    document_type INTEGER NOT NULL,
+    document_status INTEGER NOT NULL,
+    document_number TEXT NULL,
+    draft_number TEXT NOT NULL,
+    document_date TEXT NOT NULL,
+    due_date TEXT NULL,
+    company_id TEXT NOT NULL,
+    party_id TEXT NULL,
+    customer_name TEXT NOT NULL,
+    customer_gstin TEXT NULL,
+    billing_address TEXT NULL,
+    shipping_address TEXT NULL,
+    place_of_supply_state_code TEXT NOT NULL,
+    supplier_state_code TEXT NOT NULL,
+    is_reverse_charge INTEGER NOT NULL DEFAULT 0,
+    supply_type INTEGER NOT NULL DEFAULT 1,
+    currency_code TEXT NOT NULL DEFAULT 'INR',
+    sub_total_taxable NUMERIC NOT NULL DEFAULT 0,
+    cgst_total NUMERIC NOT NULL DEFAULT 0,
+    sgst_total NUMERIC NOT NULL DEFAULT 0,
+    igst_total NUMERIC NOT NULL DEFAULT 0,
+    cess_total NUMERIC NOT NULL DEFAULT 0,
+    total_tax NUMERIC NOT NULL DEFAULT 0,
+    round_off_amount NUMERIC NOT NULL DEFAULT 0,
+    grand_total NUMERIC NOT NULL DEFAULT 0,
+    total_amount_in_words TEXT NOT NULL,
+    notes TEXT NULL,
+    terms_and_conditions TEXT NULL,
+    idempotency_key TEXT NULL,
+    created_at_utc TEXT NOT NULL,
+    finalized_at_utc TEXT NULL,
+    cancelled_at_utc TEXT NULL,
+    cancellation_reason TEXT NULL,
+    created_by TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sales_document_items (
+    id TEXT PRIMARY KEY,
+    sales_document_id TEXT NOT NULL,
+    product_id TEXT NULL,
+    line_number INTEGER NOT NULL,
+    item_name TEXT NOT NULL,
+    hsn_sac_code TEXT NOT NULL,
+    quantity NUMERIC NOT NULL,
+    unit_code TEXT NOT NULL,
+    unit_price NUMERIC NOT NULL,
+    discount_percent NUMERIC NOT NULL DEFAULT 0,
+    discount_amount NUMERIC NOT NULL DEFAULT 0,
+    taxable_amount NUMERIC NOT NULL,
+    gst_rate_percent NUMERIC NOT NULL,
+    cgst_rate_percent NUMERIC NOT NULL DEFAULT 0,
+    cgst_amount NUMERIC NOT NULL DEFAULT 0,
+    sgst_rate_percent NUMERIC NOT NULL DEFAULT 0,
+    sgst_amount NUMERIC NOT NULL DEFAULT 0,
+    igst_rate_percent NUMERIC NOT NULL DEFAULT 0,
+    igst_amount NUMERIC NOT NULL DEFAULT 0,
+    cess_rate_percent NUMERIC NOT NULL DEFAULT 0,
+    cess_amount NUMERIC NOT NULL DEFAULT 0,
+    total_amount NUMERIC NOT NULL
+);
 ";
         await conn.ExecuteAsync(sql);
     }
@@ -448,6 +601,81 @@ CREATE TABLE IF NOT EXISTS parties (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS document_sequences (
+    id UUID PRIMARY KEY,
+    financial_year_id UUID NOT NULL,
+    document_type INT NOT NULL,
+    prefix VARCHAR(20) NOT NULL,
+    financial_year_token VARCHAR(20) NOT NULL,
+    next_number BIGINT NOT NULL DEFAULT 1,
+    padding_length INT NOT NULL DEFAULT 4,
+    suffix VARCHAR(20) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS sales_documents (
+    id UUID PRIMARY KEY,
+    document_type INT NOT NULL,
+    document_status INT NOT NULL,
+    document_number VARCHAR(50) NULL,
+    draft_number VARCHAR(50) NOT NULL,
+    document_date DATE NOT NULL,
+    due_date DATE NULL,
+    company_id UUID NOT NULL,
+    party_id UUID NULL,
+    customer_name VARCHAR(200) NOT NULL,
+    customer_gstin VARCHAR(15) NULL,
+    billing_address VARCHAR(500) NULL,
+    shipping_address VARCHAR(500) NULL,
+    place_of_supply_state_code VARCHAR(2) NOT NULL,
+    supplier_state_code VARCHAR(2) NOT NULL,
+    is_reverse_charge BOOLEAN NOT NULL DEFAULT FALSE,
+    supply_type INT NOT NULL DEFAULT 1,
+    currency_code VARCHAR(3) NOT NULL DEFAULT 'INR',
+    sub_total_taxable DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cgst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_tax DECIMAL(18,2) NOT NULL DEFAULT 0,
+    round_off_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    grand_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_amount_in_words VARCHAR(500) NOT NULL,
+    notes TEXT NULL,
+    terms_and_conditions TEXT NULL,
+    idempotency_key VARCHAR(100) NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
+    finalized_at_utc TIMESTAMP WITH TIME ZONE NULL,
+    cancelled_at_utc TIMESTAMP WITH TIME ZONE NULL,
+    cancellation_reason VARCHAR(500) NULL,
+    created_by VARCHAR(100) NULL
+);
+
+CREATE TABLE IF NOT EXISTS sales_document_items (
+    id UUID PRIMARY KEY,
+    sales_document_id UUID NOT NULL,
+    product_id UUID NULL,
+    line_number INT NOT NULL,
+    item_name VARCHAR(200) NOT NULL,
+    hsn_sac_code VARCHAR(10) NOT NULL,
+    quantity DECIMAL(18,3) NOT NULL,
+    unit_code VARCHAR(10) NOT NULL,
+    unit_price DECIMAL(18,2) NOT NULL,
+    discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    discount_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    taxable_amount DECIMAL(18,2) NOT NULL,
+    gst_rate_percent DECIMAL(5,2) NOT NULL,
+    cgst_rate_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    cgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    sgst_rate_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    sgst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    igst_rate_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    igst_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    cess_rate_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    cess_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_amount DECIMAL(18,2) NOT NULL
 );
 ";
         await conn.ExecuteAsync(sql);
