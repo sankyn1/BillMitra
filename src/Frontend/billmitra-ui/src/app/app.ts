@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { SystemService } from './core/services/system.service';
 import { SetupService } from './core/services/setup.service';
 import { SetupWizardComponent } from './features/setup/setup-wizard.component';
+import { ProductListComponent } from './features/masters/product-list.component';
+import { PartyListComponent } from './features/masters/party-list.component';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -22,6 +24,8 @@ import {
   imports: [
     CommonModule,
     SetupWizardComponent,
+    ProductListComponent,
+    PartyListComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,

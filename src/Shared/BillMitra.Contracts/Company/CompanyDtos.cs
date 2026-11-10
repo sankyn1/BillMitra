@@ -49,3 +49,4 @@ public class UpdateCompanyProfileRequest
     public string? InvoiceFooterNotes { get; set; }
     public string? TermsAndConditions { get; set; }
 }
+

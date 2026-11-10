@@ -46,3 +46,4 @@ public class InitialSetupRequest
     public string OwnerEmail { get; set; } = string.Empty;
     public string OwnerPassword { get; set; } = string.Empty;
 }
+

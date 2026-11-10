@@ -21,3 +21,4 @@ public interface IFinancialYearService
     Task<FinancialYearDto?> GetActiveFinancialYearAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<FinancialYearDto>> GetAllAsync(CancellationToken cancellationToken = default);
 }
+

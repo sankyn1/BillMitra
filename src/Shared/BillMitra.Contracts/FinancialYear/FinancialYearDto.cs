@@ -10,3 +10,4 @@ public class FinancialYearDto
     public bool IsLocked { get; set; }
     public DateTime CreatedAtUtc { get; set; }
 }
+

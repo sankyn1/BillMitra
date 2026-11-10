@@ -48,3 +48,4 @@ public class FinancialYearTests
         fy.IsClosed.Should().BeFalse();
     }
 }
+

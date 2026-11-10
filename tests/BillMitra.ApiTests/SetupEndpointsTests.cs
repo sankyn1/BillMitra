@@ -50,3 +50,4 @@ public class SetupEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
         result.Message.Should().Contain("Invalid GSTIN format");
     }
 }
+

@@ -40,3 +40,4 @@ public class PasswordHasherTests
         isValid.Should().BeFalse();
     }
 }
+

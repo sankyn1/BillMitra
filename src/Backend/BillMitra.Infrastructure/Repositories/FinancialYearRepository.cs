@@ -71,3 +71,4 @@ public class FinancialYearRepository : IFinancialYearRepository
         await connection.ExecuteAsync(sql, new { Id = id });
     }
 }
+
