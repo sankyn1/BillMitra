@@ -70,6 +70,10 @@
           <i class="pi pi-box"></i>
           <span class="bm-nav-label">Products & Services</span>
         </a>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'inventory'" (click)="setActiveMenu('inventory')">
+          <i class="pi pi-server"></i>
+          <span class="bm-nav-label">Inventory & Godowns</span>
+        </a>
         <a class="bm-nav-item" [class.active]="activeMenu === 'parties'" (click)="setActiveMenu('parties')">
           <i class="pi pi-users"></i>
           <span class="bm-nav-label">Customers & Parties</span>
@@ -129,7 +133,7 @@
       </nav>
 
       <div class="bm-sidebar-footer" *ngIf="!isSidebarCollapsed">
-        <span class="bm-footer-version">v0.8.0-beta (MVP-7)</span>
+        <span class="bm-footer-version">v0.9.0-beta (MVP-8)</span>
         <span class="bm-footer-mode">Offline First</span>
       </div>
     </aside>
@@ -138,6 +142,8 @@
     <main class="bm-main-content">
       @if (activeMenu === 'products') {
       <app-product-list></app-product-list>
+      } @else if (activeMenu === 'inventory') {
+      <app-inventory-dashboard></app-inventory-dashboard>
       } @else if (activeMenu === 'parties') {
       <app-party-list></app-party-list>
       } @else if (activeMenu === 'invoices') {

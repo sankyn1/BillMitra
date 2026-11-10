@@ -84,3 +84,4 @@ public class EInvoiceRecord
 
     public bool CanCancel() => Status == EInvoiceStatus.Generated && (DateTimeOffset.UtcNow - AckDate).TotalHours <= 24;
 }
+

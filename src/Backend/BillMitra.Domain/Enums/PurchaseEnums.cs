@@ -23,3 +23,4 @@ public enum ItcEligibility
     IneligibleSection17_5 = 3,  // Ineligible under Section 17(5) (Table 4D(1))
     InwardReverseCharge = 4     // Inward RCM liability with eligible ITC (Table 4A(3))
 }
+

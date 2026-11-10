@@ -23,3 +23,4 @@ public interface IEInvoiceService
     Task<IReadOnlyList<EInvoiceDto>> ListAsync(int page = 1, int pageSize = 50, CancellationToken cancellationToken = default);
     Task<DocumentEWayInvoiceSummaryDto> GetDocumentSummaryAsync(Guid documentId, CancellationToken cancellationToken = default);
 }
+

@@ -25,3 +25,4 @@ public interface IEInvoiceRepository
     Task<Guid> InsertAsync(EInvoiceRecord record, CancellationToken cancellationToken = default);
     Task UpdateAsync(EInvoiceRecord record, CancellationToken cancellationToken = default);
 }
+

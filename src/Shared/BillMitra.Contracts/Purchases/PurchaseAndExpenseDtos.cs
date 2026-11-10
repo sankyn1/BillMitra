@@ -133,3 +133,4 @@ public record ExpenseDto(
     string? Notes,
     DateTime CreatedAtUtc
 );
+

@@ -106,3 +106,4 @@ public class ExpenseEntry
     public string? Notes { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }
+

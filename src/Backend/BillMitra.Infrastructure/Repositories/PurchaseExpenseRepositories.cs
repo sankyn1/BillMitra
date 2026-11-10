@@ -512,3 +512,4 @@ INSERT INTO expense_entries (
         return $"EXP/26-27/{(count + 1):D4}";
     }
 }
+

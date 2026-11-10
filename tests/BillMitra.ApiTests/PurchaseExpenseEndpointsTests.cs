@@ -125,3 +125,4 @@ public class PurchaseExpenseEndpointsTests : IClassFixture<WebApplicationFactory
         expListJson.Data.Should().Contain(e => e.Id == exp.Id);
     }
 }
+

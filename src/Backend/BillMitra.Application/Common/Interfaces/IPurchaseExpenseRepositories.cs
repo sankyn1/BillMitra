@@ -25,3 +25,4 @@ public interface IExpenseRepository
     Task<Guid> InsertAsync(ExpenseEntry expense, CancellationToken cancellationToken = default);
     Task<string> GetNextVoucherNumberAsync(CancellationToken cancellationToken = default);
 }
+

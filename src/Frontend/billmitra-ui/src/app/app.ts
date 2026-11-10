@@ -14,6 +14,7 @@ import { GstReturnsComponent } from './features/gst/gst-returns.component';
 import { EWayInvoiceComponent } from './features/eway-invoice/eway-invoice.component';
 import { PurchaseListComponent } from './features/purchases/purchase-list.component';
 import { ExpenseListComponent } from './features/expenses/expense-list.component';
+import { InventoryDashboardComponent } from './features/inventory/inventory-dashboard.component';
 import { BmDialogComponent } from './shared/components/bm-dialog.component';
 import {
   BmButtonDirective,
@@ -45,6 +46,7 @@ import {
     EWayInvoiceComponent,
     PurchaseListComponent,
     ExpenseListComponent,
+    InventoryDashboardComponent,
     BmDialogComponent,
     BmButtonDirective,
     BmPanelDirective,

@@ -53,3 +53,4 @@ public interface IEInvoiceProvider
     Task<EInvoiceGenerateResult> GenerateIrnAsync(EInvoiceGenerationContext context, CancellationToken cancellationToken = default);
     Task<bool> CancelIrnAsync(string irn, int cancelReason, string remarks, CancellationToken cancellationToken = default);
 }
+

@@ -24,3 +24,4 @@ public interface IExpenseService
     Task<IReadOnlyList<ExpenseDto>> ListAsync(DateTime? fromDate = null, DateTime? toDate = null, Guid? categoryId = null, CancellationToken cancellationToken = default);
     Task<ExpenseDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 }
+

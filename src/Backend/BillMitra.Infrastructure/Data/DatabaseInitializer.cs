@@ -40,12 +40,44 @@ public class DatabaseInitializer
             // Seed default units if empty
             await SeedDefaultUnitsAsync(connection);
             await SeedDefaultExpenseCategoriesAsync(connection);
+            await SeedDefaultWarehousesAsync(connection);
 
             _logger.LogInformation("Core schema verified successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error initializing core database schema.");
+        }
+    }
+
+    private static async Task SeedDefaultWarehousesAsync(IDbConnection conn)
+    {
+        try
+        {
+            var count = await conn.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM warehouses");
+            if (count == 0)
+            {
+                var defaultWarehouse = new
+                {
+                    Id = Guid.NewGuid(),
+                    CompanyId = Guid.Empty,
+                    Name = "Main Store / Godown",
+                    Code = "MAIN",
+                    Address = "Primary Business Premises",
+                    City = "Ahmedabad",
+                    StateCode = "24",
+                    IsDefault = 1,
+                    IsActive = 1,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await conn.ExecuteAsync(@"
+                    INSERT INTO warehouses (id, company_id, name, code, address, city, state_code, is_default, is_active, created_at_utc)
+                    VALUES (@Id, @CompanyId, @Name, @Code, @Address, @City, @StateCode, @IsDefault, @IsActive, @CreatedAt)", defaultWarehouse);
+            }
+        }
+        catch
+        {
         }
     }
 
@@ -535,6 +567,94 @@ CREATE TABLE expense_entries (
     created_at_utc DATETIME2 NOT NULL
 );
 
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='warehouses' AND xtype='U')
+CREATE TABLE warehouses (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    company_id UNIQUEIDENTIFIER NOT NULL,
+    name NVARCHAR(100) NOT NULL,
+    code NVARCHAR(20) NOT NULL,
+    address NVARCHAR(255) NULL,
+    city NVARCHAR(100) NULL,
+    state_code NVARCHAR(10) NULL,
+    is_default BIT NOT NULL DEFAULT 0,
+    is_active BIT NOT NULL DEFAULT 1,
+    created_at_utc DATETIME2 NOT NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='stock_item_batches' AND xtype='U')
+CREATE TABLE stock_item_batches (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    product_id UNIQUEIDENTIFIER NOT NULL,
+    warehouse_id UNIQUEIDENTIFIER NOT NULL,
+    batch_number NVARCHAR(50) NOT NULL,
+    manufacturing_date DATETIME2 NULL,
+    expiry_date DATETIME2 NULL,
+    quantity_on_hand DECIMAL(18,3) NOT NULL DEFAULT 0,
+    purchase_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+    mrp DECIMAL(18,2) NOT NULL DEFAULT 0,
+    is_active BIT NOT NULL DEFAULT 1,
+    created_at_utc DATETIME2 NOT NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='stock_movements' AND xtype='U')
+CREATE TABLE stock_movements (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    company_id UNIQUEIDENTIFIER NOT NULL,
+    product_id UNIQUEIDENTIFIER NOT NULL,
+    product_name NVARCHAR(200) NOT NULL,
+    warehouse_id UNIQUEIDENTIFIER NOT NULL,
+    warehouse_name NVARCHAR(100) NOT NULL,
+    batch_id UNIQUEIDENTIFIER NULL,
+    batch_number NVARCHAR(50) NULL,
+    movement_type INT NOT NULL,
+    quantity DECIMAL(18,3) NOT NULL,
+    unit_cost DECIMAL(18,2) NOT NULL,
+    balance_quantity_after DECIMAL(18,3) NOT NULL,
+    reference_document_number NVARCHAR(50) NULL,
+    reference_document_id UNIQUEIDENTIFIER NULL,
+    remarks NVARCHAR(500) NULL,
+    movement_date DATETIME2 NOT NULL,
+    created_at_utc DATETIME2 NOT NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='stock_adjustments' AND xtype='U')
+CREATE TABLE stock_adjustments (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    company_id UNIQUEIDENTIFIER NOT NULL,
+    product_id UNIQUEIDENTIFIER NOT NULL,
+    product_name NVARCHAR(200) NOT NULL,
+    warehouse_id UNIQUEIDENTIFIER NOT NULL,
+    warehouse_name NVARCHAR(100) NOT NULL,
+    batch_id UNIQUEIDENTIFIER NULL,
+    batch_number NVARCHAR(50) NULL,
+    reason INT NOT NULL,
+    system_quantity DECIMAL(18,3) NOT NULL,
+    physical_quantity DECIMAL(18,3) NOT NULL,
+    adjustment_quantity DECIMAL(18,3) NOT NULL,
+    unit_cost DECIMAL(18,2) NOT NULL,
+    impact_value DECIMAL(18,2) NOT NULL,
+    remarks NVARCHAR(500) NULL,
+    adjustment_date DATETIME2 NOT NULL,
+    created_at_utc DATETIME2 NOT NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='stock_transfers' AND xtype='U')
+CREATE TABLE stock_transfers (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    company_id UNIQUEIDENTIFIER NOT NULL,
+    transfer_number NVARCHAR(50) NOT NULL,
+    source_warehouse_id UNIQUEIDENTIFIER NOT NULL,
+    source_warehouse_name NVARCHAR(100) NOT NULL,
+    destination_warehouse_id UNIQUEIDENTIFIER NOT NULL,
+    destination_warehouse_name NVARCHAR(100) NOT NULL,
+    product_id UNIQUEIDENTIFIER NOT NULL,
+    product_name NVARCHAR(200) NOT NULL,
+    quantity DECIMAL(18,3) NOT NULL,
+    remarks NVARCHAR(500) NULL,
+    transfer_date DATETIME2 NOT NULL,
+    created_at_utc DATETIME2 NOT NULL
+);
+
 IF NOT EXISTS (SELECT * FROM syscolumns WHERE id=OBJECT_ID('sales_documents') AND name='paid_amount')
 ALTER TABLE sales_documents ADD paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0;
 
@@ -953,6 +1073,89 @@ CREATE TABLE IF NOT EXISTS expense_entries (
     reference_number TEXT NULL,
     payee_name TEXT NULL,
     notes TEXT NULL,
+    created_at_utc TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS warehouses (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    code TEXT NOT NULL,
+    address TEXT NULL,
+    city TEXT NULL,
+    state_code TEXT NULL,
+    is_default INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at_utc TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_item_batches (
+    id TEXT PRIMARY KEY,
+    product_id TEXT NOT NULL,
+    warehouse_id TEXT NOT NULL,
+    batch_number TEXT NOT NULL,
+    manufacturing_date TEXT NULL,
+    expiry_date TEXT NULL,
+    quantity_on_hand NUMERIC NOT NULL DEFAULT 0,
+    purchase_price NUMERIC NOT NULL DEFAULT 0,
+    mrp NUMERIC NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at_utc TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_movements (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    product_name TEXT NOT NULL,
+    warehouse_id TEXT NOT NULL,
+    warehouse_name TEXT NOT NULL,
+    batch_id TEXT NULL,
+    batch_number TEXT NULL,
+    movement_type INTEGER NOT NULL,
+    quantity NUMERIC NOT NULL,
+    unit_cost NUMERIC NOT NULL,
+    balance_quantity_after NUMERIC NOT NULL,
+    reference_document_number TEXT NULL,
+    reference_document_id TEXT NULL,
+    remarks TEXT NULL,
+    movement_date TEXT NOT NULL,
+    created_at_utc TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_adjustments (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    product_name TEXT NOT NULL,
+    warehouse_id TEXT NOT NULL,
+    warehouse_name TEXT NOT NULL,
+    batch_id TEXT NULL,
+    batch_number TEXT NULL,
+    reason INTEGER NOT NULL,
+    system_quantity NUMERIC NOT NULL,
+    physical_quantity NUMERIC NOT NULL,
+    adjustment_quantity NUMERIC NOT NULL,
+    unit_cost NUMERIC NOT NULL,
+    impact_value NUMERIC NOT NULL,
+    remarks TEXT NULL,
+    adjustment_date TEXT NOT NULL,
+    created_at_utc TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_transfers (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL,
+    transfer_number TEXT NOT NULL,
+    source_warehouse_id TEXT NOT NULL,
+    source_warehouse_name TEXT NOT NULL,
+    destination_warehouse_id TEXT NOT NULL,
+    destination_warehouse_name TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    product_name TEXT NOT NULL,
+    quantity NUMERIC NOT NULL,
+    remarks TEXT NULL,
+    transfer_date TEXT NOT NULL,
     created_at_utc TEXT NOT NULL
 );
 ";
@@ -1381,6 +1584,89 @@ CREATE TABLE IF NOT EXISTS expense_entries (
     reference_number VARCHAR(50) NULL,
     payee_name VARCHAR(150) NULL,
     notes TEXT NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS warehouses (
+    id UUID PRIMARY KEY,
+    company_id UUID NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(20) NOT NULL,
+    address VARCHAR(255) NULL,
+    city VARCHAR(100) NULL,
+    state_code VARCHAR(10) NULL,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_item_batches (
+    id UUID PRIMARY KEY,
+    product_id UUID NOT NULL,
+    warehouse_id UUID NOT NULL,
+    batch_number VARCHAR(50) NOT NULL,
+    manufacturing_date TIMESTAMP WITH TIME ZONE NULL,
+    expiry_date TIMESTAMP WITH TIME ZONE NULL,
+    quantity_on_hand DECIMAL(18,3) NOT NULL DEFAULT 0,
+    purchase_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+    mrp DECIMAL(18,2) NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_movements (
+    id UUID PRIMARY KEY,
+    company_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    product_name VARCHAR(200) NOT NULL,
+    warehouse_id UUID NOT NULL,
+    warehouse_name VARCHAR(100) NOT NULL,
+    batch_id UUID NULL,
+    batch_number VARCHAR(50) NULL,
+    movement_type INT NOT NULL,
+    quantity DECIMAL(18,3) NOT NULL,
+    unit_cost DECIMAL(18,2) NOT NULL,
+    balance_quantity_after DECIMAL(18,3) NOT NULL,
+    reference_document_number VARCHAR(50) NULL,
+    reference_document_id UUID NULL,
+    remarks VARCHAR(500) NULL,
+    movement_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_adjustments (
+    id UUID PRIMARY KEY,
+    company_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    product_name VARCHAR(200) NOT NULL,
+    warehouse_id UUID NOT NULL,
+    warehouse_name VARCHAR(100) NOT NULL,
+    batch_id UUID NULL,
+    batch_number VARCHAR(50) NULL,
+    reason INT NOT NULL,
+    system_quantity DECIMAL(18,3) NOT NULL,
+    physical_quantity DECIMAL(18,3) NOT NULL,
+    adjustment_quantity DECIMAL(18,3) NOT NULL,
+    unit_cost DECIMAL(18,2) NOT NULL,
+    impact_value DECIMAL(18,2) NOT NULL,
+    remarks VARCHAR(500) NULL,
+    adjustment_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_transfers (
+    id UUID PRIMARY KEY,
+    company_id UUID NOT NULL,
+    transfer_number VARCHAR(50) NOT NULL,
+    source_warehouse_id UUID NOT NULL,
+    source_warehouse_name VARCHAR(100) NOT NULL,
+    destination_warehouse_id UUID NOT NULL,
+    destination_warehouse_name VARCHAR(100) NOT NULL,
+    product_id UUID NOT NULL,
+    product_name VARCHAR(200) NOT NULL,
+    quantity DECIMAL(18,3) NOT NULL,
+    remarks VARCHAR(500) NULL,
+    transfer_date TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
 );
 ";

@@ -84,3 +84,4 @@ public class EWayInvoiceUnitTests
         calculatedDays.Should().Be(expectedDays);
     }
 }
+

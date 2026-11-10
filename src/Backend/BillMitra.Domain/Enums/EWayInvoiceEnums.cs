@@ -48,3 +48,4 @@ public enum EInvoiceCancelReason
     OrderCancelled = 3,
     Other = 4
 }
+

@@ -184,3 +184,4 @@ export class EWayInvoiceService {
     return this.http.get<ApiResponse<DocumentEWayInvoiceSummaryDto>>(`${this.baseUrl}/einvoice/document/${documentId}/summary`);
   }
 }
+

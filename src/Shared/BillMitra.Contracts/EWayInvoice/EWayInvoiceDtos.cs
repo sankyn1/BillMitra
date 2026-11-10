@@ -90,3 +90,4 @@ public record DocumentEWayInvoiceSummaryDto(
     EWayBillDto? EWayBill,
     EInvoiceDto? EInvoice
 );
+
