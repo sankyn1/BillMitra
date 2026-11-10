@@ -1,6 +1,13 @@
 /* BillMitra Commercial Design System - Centralized Styling */
 @import "primeicons/primeicons.css";
 
+/* Suppress PrimeUI commercial license manager banner overlay element */
+#p-license-host {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 :root {
   /* Brand / Primary Palette (Corporate Sapphire / Navy) */
   --bm-primary: #1E3A8A;
