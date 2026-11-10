@@ -37,6 +37,8 @@ public static class DependencyInjection
         services.AddScoped<ISalesDocumentRepository, SalesDocumentRepository>();
         services.AddScoped<IDocumentSequenceRepository, DocumentSequenceRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IGstReturnRepository, GstReturnRepository>();
+        services.AddScoped<IGstReturnProvider, Services.SandboxGstReturnProvider>();
         services.AddScoped<IPdfGeneratorService, Services.QuestPdfGeneratorService>();
 
         return services;

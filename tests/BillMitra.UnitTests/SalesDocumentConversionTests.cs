@@ -50,3 +50,4 @@ public class SalesDocumentConversionTests
         company.LetterheadImagePath.Should().BeNull();
     }
 }
+

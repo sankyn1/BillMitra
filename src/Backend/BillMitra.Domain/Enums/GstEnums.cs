@@ -62,4 +62,34 @@ public enum PaymentStatus
     Reversed = 2
 }
 
+public enum GstReturnType
+{
+    Gstr1 = 1,
+    Gstr3b = 2
+}
+
+public enum GstFilingStatus
+{
+    NotPrepared = 0,
+    Prepared = 1,
+    ValidationFailed = 2,
+    ReadyForSubmission = 3,
+    SubmittedToProvider = 4,
+    Pending = 5,
+    Accepted = 6,
+    Rejected = 7,
+    Filed = 8
+}
+
+public enum GstSupplyCategory
+{
+    B2B = 1,
+    B2CL = 2,
+    B2CS = 3,
+    CDNR = 4,
+    CDNUR = 5,
+    Export = 6,
+    NilExempt = 7
+}
+
 

@@ -328,6 +328,28 @@ CREATE TABLE payment_reversals (
     created_at_utc DATETIME2 NOT NULL
 );
 
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='gst_return_filings' AND xtype='U')
+CREATE TABLE gst_return_filings (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    company_id UNIQUEIDENTIFIER NOT NULL,
+    return_type INT NOT NULL,
+    financial_year NVARCHAR(20) NOT NULL,
+    tax_period NVARCHAR(20) NOT NULL,
+    filing_status INT NOT NULL,
+    arn NVARCHAR(100) NULL,
+    arn_date DATETIME2 NULL,
+    validation_errors_json NVARCHAR(MAX) NULL,
+    payload_json NVARCHAR(MAX) NULL,
+    provider_name NVARCHAR(100) NULL,
+    provider_reference NVARCHAR(100) NULL,
+    provider_response_json NVARCHAR(MAX) NULL,
+    total_taxable_value DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_tax_liability DECIMAL(18,2) NOT NULL DEFAULT 0,
+    created_at_utc DATETIME2 NOT NULL,
+    updated_at_utc DATETIME2 NOT NULL,
+    filed_at_utc DATETIME2 NULL
+);
+
 IF NOT EXISTS (SELECT * FROM syscolumns WHERE id=OBJECT_ID('sales_documents') AND name='paid_amount')
 ALTER TABLE sales_documents ADD paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0;
 
@@ -579,6 +601,27 @@ CREATE TABLE IF NOT EXISTS payment_reversals (
     reason TEXT NOT NULL,
     reversed_by TEXT NULL,
     created_at_utc TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS gst_return_filings (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL,
+    return_type INTEGER NOT NULL,
+    financial_year TEXT NOT NULL,
+    tax_period TEXT NOT NULL,
+    filing_status INTEGER NOT NULL,
+    arn TEXT NULL,
+    arn_date TEXT NULL,
+    validation_errors_json TEXT NULL,
+    payload_json TEXT NULL,
+    provider_name TEXT NULL,
+    provider_reference TEXT NULL,
+    provider_response_json TEXT NULL,
+    total_taxable_value NUMERIC NOT NULL DEFAULT 0,
+    total_tax_liability NUMERIC NOT NULL DEFAULT 0,
+    created_at_utc TEXT NOT NULL,
+    updated_at_utc TEXT NOT NULL,
+    filed_at_utc TEXT NULL
 );
 ";
         await conn.ExecuteAsync(sql);
@@ -839,6 +882,27 @@ CREATE TABLE IF NOT EXISTS payment_reversals (
     reason VARCHAR(500) NOT NULL,
     reversed_by VARCHAR(100) NULL,
     created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS gst_return_filings (
+    id UUID PRIMARY KEY,
+    company_id UUID NOT NULL,
+    return_type INT NOT NULL,
+    financial_year VARCHAR(20) NOT NULL,
+    tax_period VARCHAR(20) NOT NULL,
+    filing_status INT NOT NULL,
+    arn VARCHAR(100) NULL,
+    arn_date TIMESTAMP WITH TIME ZONE NULL,
+    validation_errors_json TEXT NULL,
+    payload_json TEXT NULL,
+    provider_name VARCHAR(100) NULL,
+    provider_reference VARCHAR(100) NULL,
+    provider_response_json TEXT NULL,
+    total_taxable_value DECIMAL(18,2) NOT NULL DEFAULT 0,
+    total_tax_liability DECIMAL(18,2) NOT NULL DEFAULT 0,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
+    filed_at_utc TIMESTAMP WITH TIME ZONE NULL
 );
 ";
         await conn.ExecuteAsync(sql);
