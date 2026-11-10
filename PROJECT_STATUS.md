@@ -1,48 +1,38 @@
 # BillMitra – Project Status & Milestone Tracker
 
 **Current Date:** November 10, 2026  
-**Current State:** MVP-4 Completed – Ready for MVP-5  
+**Current State:** MVP-4.1 Completed – Ready for MVP-5  
 **Active Lead:** Principal Software Architect & Technical Lead (Antigravity)  
 
 ---
 
 ## 1. Executive Status Summary
 
-**MVP-4 (Payments, Receipts, Multi-Invoice Allocation & Customer/Supplier Ledgers)** and the **Centralized Generic Dialog & Toast System** have been completely implemented, verified with automated tests, and packaged into the Day-1 runnable Windows executable (`artifacts/development/BillMitra.exe`).
+**MVP-4.1 (Proforma to Tax Invoice Conversion, Interactive In-App Print Preview, Direct Printing, and Letterhead / Pre-Printed Stationery Management)** has been completely implemented, verified with automated tests, and packaged into the Day-1 runnable Windows executable (`artifacts/development/BillMitra.exe` v0.5.1-beta.1).
 
-### Key MVP-4 Accomplishments
-1. **Centralized Generic Dialog & Notification System**:
-   * Removed all raw browser `window.alert()` and `window.confirm()` calls across product masters, party masters, invoice management, billing editor, and payment flows.
-   * Implemented `DialogService` (signals-based) with modal backdrops, custom SVG/PrimeIcons status emblems, customizable actions, destructive styling, and auto-dismissing toast notifications (`BmDialogComponent`).
-2. **Payments & Receipts Foundation**:
-   * Customer Inward Receipts (`PaymentType.Receipt`) and Supplier Outward Payments (`PaymentType.Payment`).
-   * Multi-mode payment support: Cash, Bank Transfer (NEFT/RTGS/IMPS), Cheque/DD, UPI (Google Pay, PhonePe, Paytm), Credit Card, and Debit Card.
-   * Concurrency-safe atomic voucher numbering (`RCP/26-27/0001` for receipts, `PMT/26-27/0001` for outward payments).
-   * Advance balance calculation: unallocated payments are preserved on customer/supplier accounts as advance credit.
-3. **Multi-Invoice FIFO & Selective Allocation**:
-   * One payment voucher can be distributed across multiple outstanding invoices.
-   * Invariant validation: Allocations cannot exceed the payment amount or the remaining outstanding balance of any invoice.
-   * Single-click **Auto-Allocate (FIFO)** button to distribute payments across open invoices from oldest to newest.
-   * Automatic invoice balance tracking: Invoices transition between `Finalized` $\rightarrow$ `PartiallyPaid` $\rightarrow$ `Paid`.
-4. **Customer & Supplier Transaction Ledgers**:
-   * Comprehensive chronological statement of accounts for any party.
-   * Real-time running balance calculation with standard Indian accounting $Dr / Cr$ indicators.
-   * Detailed breakdown across Invoices (Debit), Receipts (Credit), Payments, and Reversals.
-5. **Overdue Aging Analysis**:
-   * Automated aging buckets: **Current (0-30 days)**, **31-60 days**, **61-90 days**, and **Overdue (90+ days)**.
-   * Instant aging cards in the ledger view for active debt collection.
-6. **Auditable Transaction Reversals**:
-   * Financial records are never deleted.
-   * Reversals require a mandatory audit reason (`payment_reversals` table).
-   * Payment status transitions to `Reversed`, automatically restoring all linked invoice outstanding balances.
-7. **Quality Assurance & Verification**:
-   * Automated test suite expanded to **70 passing tests** (100% success rate across all test projects):
-     * Architecture Tests: 6 passed (Clean Architecture verified)
-     * Unit Tests: 52 passed (Payment allocation math, bounds enforcement, aging bucket classification, GST intra/inter state, rounding, currency to words, Rule 46 numbering, HSN validation)
-     * Integration Tests: 2 passed (Dapper resiliency)
-     * API Contract Tests: 12 passed (Payment and ledger workflow end-to-end, partial payment transitions, reversal restore, invoice draft & finalize, PDF download, master CRUD)
-8. **Continuous Executable Delivery**:
-   * Day-1 runnable Windows executable generated and verified at `artifacts\development\BillMitra.exe` (v0.5.0-beta.1).
+### Key MVP-4.1 Accomplishments
+1. **Industry-Standard Proforma Invoice & Quotation Conversion**:
+   * Benchmarked against leading Indian billing software (Zoho Books, TallyPrime, Busy, Vyapar).
+   * Proforma Invoices (`PI/...`) and Quotations (`QT/...`) can be converted into official GST Tax Invoices with a single click.
+   * Full statutory commercial audit trail: The generated Tax Invoice retains source linkage (`SourceDocumentId`, `SourceDocumentNumber` e.g. `"Order/Ref: PI/26-27/0001"`).
+   * Exact duplication guard: Source document permanently transitions to `DocumentStatus.Converted = 6`, locking the source document from being converted multiple times (`CanConvert()`).
+2. **Interactive In-App Print & Preview Dialog (`DocumentPreviewDialogComponent`)**:
+   * Instant modal preview inside Angular using real-time PDF blob generation.
+   * Format Switcher: Dynamic switching between **Standard A4**, **Compact A5 Landscape**, and **80mm POS Thermal Receipt**.
+   * Letterhead Mode Switcher: Toggle between **With Digital Letterhead** and **Pre-Printed Stationery**.
+3. **Direct Printing from Desktop Application**:
+   * Implemented one-click **Direct Print** (`iframe.contentWindow.print()`), sending print jobs directly to the Windows Print Spooler (thermal slip printers, office laserjets) without requiring users to download a PDF file to disk first.
+   * Quick "Download" button retained for electronic archiving.
+4. **Letterhead vs. Pre-Printed Stationery Support**:
+   * **With Digital Letterhead**: Renders full company identity (Legal Name, Trade Name, GSTIN, Address, PAN, Phone/Email) or custom graphic header banner.
+   * **Pre-Printed Stationery Mode**: Suppresses the company supplier header box and applies a configurable top margin gap (`preprinted_header_margin_mm`, default 50mm, configurable from 20mm to 100mm) so that content prints perfectly on pre-printed offset company letterheads.
+   * **Custom Letterhead Graphic Upload**: Companies can upload their custom letterhead/banner graphic (PNG, JPEG, WebP) directly from Company Settings (`/api/v1/company/letterhead`), replacing standard header boxes.
+5. **Quality Assurance & Verification**:
+   * Automated test suite expanded to **73 passing tests** (100% success rate across all test projects):
+     * Unit Tests: `SalesDocumentConversionTests` covering `CanConvert()` domain rules and company stationery configuration.
+     * API Tests: `ConvertProformaToInvoice_FlowSucceeds_AndLinksSource` and `LetterheadSettings_UpdateAndPreprintedPdfGeneration_Succeeds`.
+     * Architecture Tests: 6 passed (0 violations).
+   * **Continuous Executable Delivery**: Runnable Windows package generated at `artifacts\development\BillMitra.exe` (v0.5.1-beta.1).
 
 ---
 
@@ -56,6 +46,7 @@
 | **MVP-2** | **Masters & Catalog** | Products, categories, units, HSN/SAC, customers, suppliers, quick seeding | **COMPLETED** | `artifacts/development/BillMitra.exe` (v0.3.0) |
 | **MVP-3** | **GST Billing & Sales Docs** | Central GST calculator, atomic sequence numbering, immutable snapshots, QuestPDF | **COMPLETED** | `artifacts/development/BillMitra.exe` (v0.4.0) |
 | **MVP-4** | **Payments & Ledger** | Receipts, multi-invoice allocations, aging, customer/supplier ledgers | **COMPLETED** | `artifacts/development/BillMitra.exe` (v0.5.0) |
+| **MVP-4.1**| **Proforma Conversion & Stationery Engine** | Proforma $\rightarrow$ Tax Invoice conversion, in-app print preview dialog, direct printing, custom letterhead upload, pre-printed stationery mode | **COMPLETED** | `artifacts/development/BillMitra.exe` (v0.5.1) |
 | **MVP-5** | **GST Returns (GSTR-1/3B)** | GSTR-1 JSON export, GSTR-3B summary, HSN register, provider adapter baseline | **READY TO START** | Development Build v0.6.0 |
 | **MVP-6** | **E-Way Bill & E-Invoice** | E-Way Bill workflows, IRN generation, signed QR code rendering, IRP sandbox | Queued | Development Build v0.7.0 |
 | **MVP-7** | **Purchases & Expenses** | Inward purchase invoices, ITC eligibility, expense categorization | Queued | Development Build v0.8.0 |

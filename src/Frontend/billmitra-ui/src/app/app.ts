@@ -9,6 +9,7 @@ import { InvoiceListComponent } from './features/sales/invoice-list.component';
 import { InvoiceEditorComponent } from './features/sales/invoice-editor.component';
 import { PaymentListComponent } from './features/payments/payment-list.component';
 import { PartyLedgerComponent } from './features/payments/party-ledger.component';
+import { CompanySettingsComponent } from './features/setup/company-settings.component';
 import { BmDialogComponent } from './shared/components/bm-dialog.component';
 import {
   BmButtonDirective,
@@ -35,6 +36,7 @@ import {
     InvoiceEditorComponent,
     PaymentListComponent,
     PartyLedgerComponent,
+    CompanySettingsComponent,
     BmDialogComponent,
     BmButtonDirective,
     BmPanelDirective,

@@ -16,3 +16,4 @@ public interface IPaymentService
     Task<IReadOnlyList<CustomerLedgerEntryDto>> GetPartyLedgerAsync(Guid partyId, DateTime? fromDate = null, DateTime? toDate = null, CancellationToken cancellationToken = default);
     Task<PartyAgingSummaryDto> GetPartyAgingSummaryAsync(Guid partyId, CancellationToken cancellationToken = default);
 }
+

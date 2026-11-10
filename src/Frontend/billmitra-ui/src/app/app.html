@@ -132,6 +132,10 @@
       <app-party-list></app-party-list>
       } @else if (activeMenu === 'invoices') {
       <app-invoice-list (createNew)="openNewInvoice()" (editInvoice)="openEditInvoice($event)"></app-invoice-list>
+      } @else if (activeMenu === 'quotations') {
+      <app-invoice-list (createNew)="openNewInvoice()" (editInvoice)="openEditInvoice($event)"></app-invoice-list>
+      } @else if (activeMenu === 'settings') {
+      <app-company-settings></app-company-settings>
       } @else if (activeMenu === 'new-invoice') {
       <app-invoice-editor [editingId]="activeInvoiceId" (navigateBack)="setActiveMenu('invoices')" (invoiceSaved)="setActiveMenu('invoices')"></app-invoice-editor>
       } @else if (activeMenu === 'payments') {

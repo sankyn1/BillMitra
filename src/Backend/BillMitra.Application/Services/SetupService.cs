@@ -188,6 +188,9 @@ public class CompanyService : ICompanyService
         entity.UpiId = request.UpiId;
         entity.InvoiceFooterNotes = request.InvoiceFooterNotes;
         entity.TermsAndConditions = request.TermsAndConditions;
+        entity.LetterheadImagePath = request.LetterheadImagePath;
+        entity.DefaultLetterheadMode = request.DefaultLetterheadMode > 0 ? request.DefaultLetterheadMode : 1;
+        entity.PreprintedHeaderMarginMm = request.PreprintedHeaderMarginMm > 0 ? request.PreprintedHeaderMarginMm : 50;
         entity.UpdatedAtUtc = DateTime.UtcNow;
 
         if (entity.CreatedAtUtc == default)
@@ -201,6 +204,72 @@ public class CompanyService : ICompanyService
         }
 
         return MapToDto(entity);
+    }
+
+    public async Task<CompanyProfileDto> UpdateLetterheadSettingsAsync(UpdateLetterheadSettingsRequest request, CancellationToken cancellationToken = default)
+    {
+        var entity = await _companyRepository.GetPrimaryCompanyAsync(cancellationToken);
+        if (entity == null)
+            throw new InvalidOperationException("Company profile does not exist.");
+
+        entity.DefaultLetterheadMode = request.DefaultLetterheadMode > 0 ? request.DefaultLetterheadMode : 1;
+        entity.PreprintedHeaderMarginMm = request.PreprintedHeaderMarginMm > 0 ? request.PreprintedHeaderMarginMm : 50;
+        entity.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _companyRepository.UpdateAsync(entity, cancellationToken);
+        return MapToDto(entity);
+    }
+
+    public async Task<string> SaveLetterheadImageAsync(string base64Data, string? fileName, CancellationToken cancellationToken = default)
+    {
+        var entity = await _companyRepository.GetPrimaryCompanyAsync(cancellationToken);
+        if (entity == null)
+            throw new InvalidOperationException("Company profile does not exist.");
+
+        // Clean base64 header if present (e.g. data:image/png;base64,...)
+        var cleanBase64 = base64Data;
+        if (cleanBase64.Contains(','))
+        {
+            cleanBase64 = cleanBase64.Substring(cleanBase64.IndexOf(',') + 1);
+        }
+
+        var imageBytes = Convert.FromBase64String(cleanBase64);
+
+        var dataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "letterheads");
+        Directory.CreateDirectory(dataDir);
+
+        var ext = ".png";
+        if (!string.IsNullOrWhiteSpace(fileName))
+        {
+            var detectedExt = Path.GetExtension(fileName);
+            if (!string.IsNullOrWhiteSpace(detectedExt)) ext = detectedExt;
+        }
+
+        var filePath = Path.Combine(dataDir, $"letterhead_{entity.Id:N}{ext}");
+        await File.WriteAllBytesAsync(filePath, imageBytes, cancellationToken);
+
+        entity.LetterheadImagePath = filePath;
+        entity.UpdatedAtUtc = DateTime.UtcNow;
+        await _companyRepository.UpdateAsync(entity, cancellationToken);
+
+        return filePath;
+    }
+
+    public async Task<bool> RemoveLetterheadImageAsync(CancellationToken cancellationToken = default)
+    {
+        var entity = await _companyRepository.GetPrimaryCompanyAsync(cancellationToken);
+        if (entity == null) return false;
+
+        if (!string.IsNullOrWhiteSpace(entity.LetterheadImagePath) && File.Exists(entity.LetterheadImagePath))
+        {
+            try { File.Delete(entity.LetterheadImagePath); } catch {}
+        }
+
+        entity.LetterheadImagePath = null;
+        entity.UpdatedAtUtc = DateTime.UtcNow;
+        await _companyRepository.UpdateAsync(entity, cancellationToken);
+
+        return true;
     }
 
     private static CompanyProfileDto MapToDto(CompanyProfile e) => new()
@@ -226,6 +295,9 @@ public class CompanyService : ICompanyService
         UpiId = e.UpiId,
         InvoiceFooterNotes = e.InvoiceFooterNotes,
         TermsAndConditions = e.TermsAndConditions,
+        LetterheadImagePath = e.LetterheadImagePath,
+        DefaultLetterheadMode = e.DefaultLetterheadMode,
+        PreprintedHeaderMarginMm = e.PreprintedHeaderMarginMm,
         CreatedAtUtc = e.CreatedAtUtc,
         UpdatedAtUtc = e.UpdatedAtUtc
     };

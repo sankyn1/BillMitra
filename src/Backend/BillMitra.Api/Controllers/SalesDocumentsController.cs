@@ -182,10 +182,37 @@ public class SalesDocumentsController : ControllerBase
         }
     }
 
+    [HttpPost("{id:guid}/convert-to-invoice")]
+    public async Task<ActionResult<ApiResponse<SalesDocumentDto>>> ConvertToTaxInvoice(
+        Guid id,
+        [FromBody] ConvertToInvoiceRequest? request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var user = User?.Identity?.Name ?? "Admin";
+            var finalizeImmediately = request?.FinalizeImmediately ?? false;
+            var invoice = await _salesService.ConvertToTaxInvoiceAsync(id, finalizeImmediately, user, cancellationToken);
+            var msg = finalizeImmediately
+                ? $"Successfully converted to finalized Tax Invoice: {invoice.DocumentNumber}"
+                : $"Successfully converted to draft Tax Invoice: {invoice.DraftNumber}";
+            return Ok(ApiResponse<SalesDocumentDto>.Ok(invoice, msg));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<SalesDocumentDto>.Fail(ex.Message, statusCode: 404));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<SalesDocumentDto>.Fail(ex.Message));
+        }
+    }
+
     [HttpGet("{id:guid}/pdf")]
     public async Task<IActionResult> DownloadPdf(
         Guid id,
         [FromQuery] string format = "a4",
+        [FromQuery] bool? withLetterhead = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -196,9 +223,10 @@ public class SalesDocumentsController : ControllerBase
                 return NotFound();
             }
 
-            var pdfBytes = await _salesService.GeneratePdfAsync(id, format, cancellationToken);
+            var pdfBytes = await _salesService.GeneratePdfAsync(id, format, withLetterhead, cancellationToken);
             var safeNumber = (doc.DocumentNumber ?? doc.DraftNumber).Replace("/", "-");
-            var fileName = $"{doc.DocumentType}_{safeNumber}_{format}.pdf";
+            var letterheadSuffix = withLetterhead == false ? "_preprinted" : "";
+            var fileName = $"{doc.DocumentType}_{safeNumber}_{format}{letterheadSuffix}.pdf";
 
             return File(pdfBytes, "application/pdf", fileName);
         }

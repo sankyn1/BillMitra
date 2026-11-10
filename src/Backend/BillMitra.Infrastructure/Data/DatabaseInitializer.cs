@@ -98,6 +98,9 @@ CREATE TABLE company_profile (
     upi_id NVARCHAR(100) NULL,
     invoice_footer_notes NVARCHAR(MAX) NULL,
     terms_and_conditions NVARCHAR(MAX) NULL,
+    letterhead_image_path NVARCHAR(500) NULL,
+    default_letterhead_mode INT NOT NULL DEFAULT 1,
+    preprinted_header_margin_mm INT NOT NULL DEFAULT 50,
     is_active BIT NOT NULL DEFAULT 1,
     created_at_utc DATETIME2 NOT NULL,
     updated_at_utc DATETIME2 NOT NULL
@@ -252,7 +255,10 @@ CREATE TABLE sales_documents (
     finalized_at_utc DATETIME2 NULL,
     cancelled_at_utc DATETIME2 NULL,
     cancellation_reason NVARCHAR(500) NULL,
-    created_by NVARCHAR(100) NULL
+    created_by NVARCHAR(100) NULL,
+    source_document_id UNIQUEIDENTIFIER NULL,
+    source_document_number NVARCHAR(50) NULL,
+    converted_to_document_id UNIQUEIDENTIFIER NULL
 );
 
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='sales_document_items' AND xtype='U')
@@ -324,6 +330,12 @@ CREATE TABLE payment_reversals (
 
 IF NOT EXISTS (SELECT * FROM syscolumns WHERE id=OBJECT_ID('sales_documents') AND name='paid_amount')
 ALTER TABLE sales_documents ADD paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0;
+
+IF NOT EXISTS (SELECT * FROM syscolumns WHERE id=OBJECT_ID('company_profile') AND name='letterhead_image_path')
+ALTER TABLE company_profile ADD letterhead_image_path NVARCHAR(500) NULL, default_letterhead_mode INT NOT NULL DEFAULT 1, preprinted_header_margin_mm INT NOT NULL DEFAULT 50;
+
+IF NOT EXISTS (SELECT * FROM syscolumns WHERE id=OBJECT_ID('sales_documents') AND name='source_document_id')
+ALTER TABLE sales_documents ADD source_document_id UNIQUEIDENTIFIER NULL, source_document_number NVARCHAR(50) NULL, converted_to_document_id UNIQUEIDENTIFIER NULL;
 ";
         await conn.ExecuteAsync(sql);
     }
@@ -353,6 +365,9 @@ CREATE TABLE IF NOT EXISTS company_profile (
     upi_id TEXT NULL,
     invoice_footer_notes TEXT NULL,
     terms_and_conditions TEXT NULL,
+    letterhead_image_path TEXT NULL,
+    default_letterhead_mode INTEGER NOT NULL DEFAULT 1,
+    preprinted_header_margin_mm INTEGER NOT NULL DEFAULT 50,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at_utc TEXT NOT NULL,
     updated_at_utc TEXT NOT NULL
@@ -497,7 +512,10 @@ CREATE TABLE IF NOT EXISTS sales_documents (
     finalized_at_utc TEXT NULL,
     cancelled_at_utc TEXT NULL,
     cancellation_reason TEXT NULL,
-    created_by TEXT NULL
+    created_by TEXT NULL,
+    source_document_id TEXT NULL,
+    source_document_number TEXT NULL,
+    converted_to_document_id TEXT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sales_document_items (
@@ -573,6 +591,13 @@ CREATE TABLE IF NOT EXISTS payment_reversals (
         {
             // Column already exists
         }
+
+        try { await conn.ExecuteAsync("ALTER TABLE company_profile ADD COLUMN letterhead_image_path TEXT NULL;"); } catch {}
+        try { await conn.ExecuteAsync("ALTER TABLE company_profile ADD COLUMN default_letterhead_mode INTEGER NOT NULL DEFAULT 1;"); } catch {}
+        try { await conn.ExecuteAsync("ALTER TABLE company_profile ADD COLUMN preprinted_header_margin_mm INTEGER NOT NULL DEFAULT 50;"); } catch {}
+        try { await conn.ExecuteAsync("ALTER TABLE sales_documents ADD COLUMN source_document_id TEXT NULL;"); } catch {}
+        try { await conn.ExecuteAsync("ALTER TABLE sales_documents ADD COLUMN source_document_number TEXT NULL;"); } catch {}
+        try { await conn.ExecuteAsync("ALTER TABLE sales_documents ADD COLUMN converted_to_document_id TEXT NULL;"); } catch {}
     }
 
     private static async Task CreatePostgreSqlTablesAsync(IDbConnection conn)
@@ -600,6 +625,9 @@ CREATE TABLE IF NOT EXISTS company_profile (
     upi_id VARCHAR(100) NULL,
     invoice_footer_notes TEXT NULL,
     terms_and_conditions TEXT NULL,
+    letterhead_image_path VARCHAR(500) NULL,
+    default_letterhead_mode INT NOT NULL DEFAULT 1,
+    preprinted_header_margin_mm INT NOT NULL DEFAULT 50,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
@@ -744,7 +772,10 @@ CREATE TABLE IF NOT EXISTS sales_documents (
     finalized_at_utc TIMESTAMP WITH TIME ZONE NULL,
     cancelled_at_utc TIMESTAMP WITH TIME ZONE NULL,
     cancellation_reason VARCHAR(500) NULL,
-    created_by VARCHAR(100) NULL
+    created_by VARCHAR(100) NULL,
+    source_document_id UUID NULL,
+    source_document_number VARCHAR(50) NULL,
+    converted_to_document_id UUID NULL
 );
 
 CREATE TABLE IF NOT EXISTS sales_document_items (
@@ -820,5 +851,12 @@ CREATE TABLE IF NOT EXISTS payment_reversals (
         {
             // Column already exists
         }
+
+        try { await conn.ExecuteAsync("ALTER TABLE company_profile ADD COLUMN IF NOT EXISTS letterhead_image_path VARCHAR(500) NULL;"); } catch {}
+        try { await conn.ExecuteAsync("ALTER TABLE company_profile ADD COLUMN IF NOT EXISTS default_letterhead_mode INT NOT NULL DEFAULT 1;"); } catch {}
+        try { await conn.ExecuteAsync("ALTER TABLE company_profile ADD COLUMN IF NOT EXISTS preprinted_header_margin_mm INT NOT NULL DEFAULT 50;"); } catch {}
+        try { await conn.ExecuteAsync("ALTER TABLE sales_documents ADD COLUMN IF NOT EXISTS source_document_id UUID NULL;"); } catch {}
+        try { await conn.ExecuteAsync("ALTER TABLE sales_documents ADD COLUMN IF NOT EXISTS source_document_number VARCHAR(50) NULL;"); } catch {}
+        try { await conn.ExecuteAsync("ALTER TABLE sales_documents ADD COLUMN IF NOT EXISTS converted_to_document_id UUID NULL;"); } catch {}
     }
 }

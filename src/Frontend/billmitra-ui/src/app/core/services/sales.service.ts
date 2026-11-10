@@ -15,7 +15,10 @@ export enum DocumentType {
 export enum DocumentStatus {
   Draft = 1,
   Finalized = 2,
-  Cancelled = 3
+  PartiallyPaid = 3,
+  Paid = 4,
+  Cancelled = 5,
+  Converted = 6
 }
 
 export enum GstSupplyType {
@@ -72,6 +75,7 @@ export interface SalesDocumentDto {
   totalTax: number;
   roundOffAmount: number;
   grandTotal: number;
+  paidAmount?: number;
   totalAmountInWords: string;
   notes?: string;
   termsAndConditions?: string;
@@ -79,6 +83,10 @@ export interface SalesDocumentDto {
   finalizedAtUtc?: string;
   cancelledAtUtc?: string;
   cancellationReason?: string;
+  sourceDocumentId?: string;
+  sourceDocumentNumber?: string;
+  convertedToDocumentId?: string;
+  canConvert?: boolean;
   items: SalesDocumentItemDto[];
 }
 
@@ -193,8 +201,21 @@ export class SalesService {
     return this.http.post<ApiResponse<SalesDocumentDto>>(`${this.baseUrl}/${id}/cancel`, { cancellationReason });
   }
 
-  downloadPdf(id: string, format: string = 'a4'): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/${id}/pdf?format=${format}`, {
+  convertToTaxInvoice(id: string, finalizeImmediately: boolean = false): Observable<ApiResponse<SalesDocumentDto>> {
+    return this.http.post<ApiResponse<SalesDocumentDto>>(`${this.baseUrl}/${id}/convert-to-invoice`, { finalizeImmediately });
+  }
+
+  downloadPdf(id: string, format: string = 'a4', withLetterhead?: boolean): Observable<Blob> {
+    return this.getPdfBlob(id, format, withLetterhead);
+  }
+
+  getPdfBlob(id: string, format: string = 'a4', withLetterhead?: boolean): Observable<Blob> {
+    let params = new HttpParams().set('format', format);
+    if (withLetterhead !== undefined && withLetterhead !== null) {
+      params = params.set('withLetterhead', withLetterhead.toString());
+    }
+    return this.http.get(`${this.baseUrl}/${id}/pdf`, {
+      params,
       responseType: 'blob'
     });
   }

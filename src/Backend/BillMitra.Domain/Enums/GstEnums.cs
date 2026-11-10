@@ -29,7 +29,8 @@ public enum DocumentStatus
     Finalized = 2,
     PartiallyPaid = 3,
     Paid = 4,
-    Cancelled = 5
+    Cancelled = 5,
+    Converted = 6
 }
 
 public enum SupplyType

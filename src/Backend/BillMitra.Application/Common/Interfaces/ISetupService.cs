@@ -14,6 +14,9 @@ public interface ICompanyService
 {
     Task<CompanyProfileDto?> GetProfileAsync(CancellationToken cancellationToken = default);
     Task<CompanyProfileDto> UpdateProfileAsync(UpdateCompanyProfileRequest request, CancellationToken cancellationToken = default);
+    Task<CompanyProfileDto> UpdateLetterheadSettingsAsync(UpdateLetterheadSettingsRequest request, CancellationToken cancellationToken = default);
+    Task<string> SaveLetterheadImageAsync(string base64Data, string? fileName, CancellationToken cancellationToken = default);
+    Task<bool> RemoveLetterheadImageAsync(CancellationToken cancellationToken = default);
 }
 
 public interface IFinancialYearService

@@ -88,3 +88,4 @@ public class LedgerEntry
     public decimal RunningBalance { get; set; }
     public string? Notes { get; set; }
 }
+

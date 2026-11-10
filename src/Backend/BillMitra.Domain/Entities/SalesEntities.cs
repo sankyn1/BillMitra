@@ -50,10 +50,16 @@ public class SalesDocument
     public string? CancellationReason { get; set; }
     public string? CreatedBy { get; set; }
 
+    // Conversion and Cross-Reference Links
+    public Guid? SourceDocumentId { get; set; }
+    public string? SourceDocumentNumber { get; set; }
+    public Guid? ConvertedToDocumentId { get; set; }
+
     public List<SalesDocumentItem> Items { get; set; } = new();
 
     public bool CanFinalize() => DocumentStatus == DocumentStatus.Draft;
     public bool CanCancel() => DocumentStatus == DocumentStatus.Finalized;
+    public bool CanConvert() => (DocumentType == DocumentType.ProformaInvoice || DocumentType == DocumentType.Quotation) && DocumentStatus != DocumentStatus.Converted && DocumentStatus != DocumentStatus.Cancelled;
 }
 
 public class SalesDocumentItem

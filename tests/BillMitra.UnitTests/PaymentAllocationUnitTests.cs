@@ -89,3 +89,4 @@ public class PaymentAllocationUnitTests
         Assert.Equal(expectedBucket, bucket);
     }
 }
+

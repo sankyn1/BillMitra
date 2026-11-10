@@ -18,7 +18,7 @@ public class QuestPdfGeneratorService : IPdfGeneratorService
         QuestPDF.Settings.ThrowOnMissingFontFamilies = false;
     }
 
-    public byte[] GenerateDocumentPdf(SalesDocumentDto document, CompanyProfileDto company, string format)
+    public byte[] GenerateDocumentPdf(SalesDocumentDto document, CompanyProfileDto company, string format, bool withLetterhead = true)
     {
         var fmt = (format ?? "a4").Trim().ToLowerInvariant();
 
@@ -30,28 +30,40 @@ public class QuestPdfGeneratorService : IPdfGeneratorService
             }
             else
             {
-                ComposeStandardDocument(container, document, company, isA5: fmt == "a5");
+                ComposeStandardDocument(container, document, company, isA5: fmt == "a5", withLetterhead: withLetterhead);
             }
         });
 
         return pdfDoc.GeneratePdf();
     }
 
-    private static void ComposeStandardDocument(IDocumentContainer container, SalesDocumentDto doc, CompanyProfileDto company, bool isA5)
+    private static void ComposeStandardDocument(IDocumentContainer container, SalesDocumentDto doc, CompanyProfileDto company, bool isA5, bool withLetterhead)
     {
         container.Page(page =>
         {
             page.Size(isA5 ? PageSizes.A5.Landscape() : PageSizes.A4);
-            page.Margin(isA5 ? 18 : 24);
+            if (!withLetterhead)
+            {
+                var topMarginMm = company.PreprintedHeaderMarginMm > 0 ? company.PreprintedHeaderMarginMm : 50;
+                page.MarginTop(topMarginMm, Unit.Millimetre);
+                page.MarginLeft(isA5 ? 18 : 24);
+                page.MarginRight(isA5 ? 18 : 24);
+                page.MarginBottom(isA5 ? 18 : 24);
+            }
+            else
+            {
+                page.Margin(isA5 ? 18 : 24);
+            }
+
             page.DefaultTextStyle(x => x.FontSize(isA5 ? 8 : 9).FontFamily("Lato"));
 
-            page.Header().Element(c => ComposeHeader(c, doc, company, isA5));
+            page.Header().Element(c => ComposeHeader(c, doc, company, isA5, withLetterhead));
             page.Content().Element(c => ComposeBody(c, doc, isA5));
             page.Footer().Element(c => ComposeFooter(c, doc, company, isA5));
         });
     }
 
-    private static void ComposeHeader(IContainer container, SalesDocumentDto doc, CompanyProfileDto company, bool isA5)
+    private static void ComposeHeader(IContainer container, SalesDocumentDto doc, CompanyProfileDto company, bool isA5, bool withLetterhead)
     {
         var docTitle = doc.DocumentType switch
         {
@@ -67,6 +79,12 @@ public class QuestPdfGeneratorService : IPdfGeneratorService
 
         container.Column(col =>
         {
+            // Custom Letterhead image header if configured & exists on disk
+            if (withLetterhead && !string.IsNullOrWhiteSpace(company.LetterheadImagePath) && System.IO.File.Exists(company.LetterheadImagePath))
+            {
+                col.Item().PaddingBottom(6).Image(company.LetterheadImagePath).FitWidth();
+            }
+
             // Title & Status
             col.Item().Row(row =>
             {
@@ -76,7 +94,7 @@ public class QuestPdfGeneratorService : IPdfGeneratorService
                     titleCol.Item().Text(doc.DocumentStatus == DocumentStatus.Finalized ? "Original for Recipient" : $"[ {doc.DocumentStatus.ToString().ToUpperInvariant()} ]").FontSize(isA5 ? 7 : 8).FontColor("#475569");
                 });
 
-                row.ConstantItem(200).AlignRight().Column(metaCol =>
+                row.ConstantItem(220).AlignRight().Column(metaCol =>
                 {
                     metaCol.Item().Text(text =>
                     {
@@ -88,6 +106,14 @@ public class QuestPdfGeneratorService : IPdfGeneratorService
                     {
                         metaCol.Item().Text($"Due Date: {doc.DueDate.Value:dd-MMM-yyyy}");
                     }
+                    if (!string.IsNullOrWhiteSpace(doc.SourceDocumentNumber))
+                    {
+                        metaCol.Item().Text(text =>
+                        {
+                            text.Span("Ref / Source: ").Bold();
+                            text.Span(doc.SourceDocumentNumber).FontColor("#1E3A8A");
+                        });
+                    }
                     metaCol.Item().Text($"Place of Supply: State Code {doc.PlaceOfSupplyStateCode}");
                     metaCol.Item().Text($"Reverse Charge: {(doc.IsReverseCharge ? "YES" : "NO")}");
                 });
@@ -98,29 +124,32 @@ public class QuestPdfGeneratorService : IPdfGeneratorService
             // Company vs Party details
             col.Item().Row(row =>
             {
-                // Supplier Box
-                row.RelativeItem().Border(1).BorderColor("#E2E8F0").Padding(8).Column(suppCol =>
+                if (withLetterhead)
                 {
-                    suppCol.Item().Text("SUPPLIER (ISSUED BY):").Bold().FontSize(isA5 ? 7 : 8).FontColor("#1E3A8A");
-                    suppCol.Item().Text(company.LegalName).Bold().FontSize(isA5 ? 9 : 10);
-                    if (!string.IsNullOrWhiteSpace(company.TradeName) && company.TradeName != company.LegalName)
+                    // Supplier Box
+                    row.RelativeItem().Border(1).BorderColor("#E2E8F0").Padding(8).Column(suppCol =>
                     {
-                        suppCol.Item().Text($"({company.TradeName})").Italic();
-                    }
-                    suppCol.Item().Text($"{company.AddressLine1}, {company.City} - {company.Pincode}");
-                    suppCol.Item().Text(text =>
-                    {
-                        text.Span("GSTIN: ").Bold();
-                        text.Span(company.Gstin ?? "Unregistered").Bold();
+                        suppCol.Item().Text("SUPPLIER (ISSUED BY):").Bold().FontSize(isA5 ? 7 : 8).FontColor("#1E3A8A");
+                        suppCol.Item().Text(company.LegalName).Bold().FontSize(isA5 ? 9 : 10);
+                        if (!string.IsNullOrWhiteSpace(company.TradeName) && company.TradeName != company.LegalName)
+                        {
+                            suppCol.Item().Text($"({company.TradeName})").Italic();
+                        }
+                        suppCol.Item().Text($"{company.AddressLine1}, {company.City} - {company.Pincode}");
+                        suppCol.Item().Text(text =>
+                        {
+                            text.Span("GSTIN: ").Bold();
+                            text.Span(company.Gstin ?? "Unregistered").Bold();
+                        });
+                        suppCol.Item().Text($"State: {company.StateName} ({company.StateCode}) | PAN: {company.Pan}");
+                        if (!string.IsNullOrWhiteSpace(company.Phone))
+                        {
+                            suppCol.Item().Text($"Phone: {company.Phone} | Email: {company.Email}");
+                        }
                     });
-                    suppCol.Item().Text($"State: {company.StateName} ({company.StateCode}) | PAN: {company.Pan}");
-                    if (!string.IsNullOrWhiteSpace(company.Phone))
-                    {
-                        suppCol.Item().Text($"Phone: {company.Phone} | Email: {company.Email}");
-                    }
-                });
 
-                row.ConstantItem(10);
+                    row.ConstantItem(10);
+                }
 
                 // Recipient Box
                 row.RelativeItem().Border(1).BorderColor("#E2E8F0").Padding(8).Column(custCol =>

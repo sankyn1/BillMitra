@@ -46,6 +46,40 @@ export interface InitialSetupRequest {
   ownerPassword: string;
 }
 
+export interface CompanyProfileDto {
+  id: string;
+  legalName: string;
+  tradeName: string;
+  gstin?: string;
+  pan?: string;
+  gstRegistrationType: number;
+  stateCode: string;
+  stateName: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  pincode: string;
+  phone: string;
+  email?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIfsc?: string;
+  bankBranch?: string;
+  upiId?: string;
+  invoiceFooterNotes?: string;
+  termsAndConditions?: string;
+  letterheadImagePath?: string;
+  defaultLetterheadMode: number;
+  preprintedHeaderMarginMm: number;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+}
+
+export interface UpdateLetterheadSettingsRequest {
+  defaultLetterheadMode: number;
+  preprintedHeaderMarginMm: number;
+}
+
 export const INDIAN_STATES: { code: string; name: string }[] = [
   { code: '01', name: 'Jammu and Kashmir' },
   { code: '02', name: 'Himachal Pradesh' },
@@ -134,6 +168,22 @@ export class SetupService {
         }
       })
     );
+  }
+
+  public getCompanyProfile(): Observable<ApiResponse<CompanyProfileDto>> {
+    return this.http.get<ApiResponse<CompanyProfileDto>>(`${this.baseUrl}/company/profile`);
+  }
+
+  public updateLetterheadSettings(req: UpdateLetterheadSettingsRequest): Observable<ApiResponse<CompanyProfileDto>> {
+    return this.http.put<ApiResponse<CompanyProfileDto>>(`${this.baseUrl}/company/letterhead-settings`, req);
+  }
+
+  public uploadLetterhead(base64Data: string, fileName: string): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(`${this.baseUrl}/company/letterhead`, { base64Data, fileName });
+  }
+
+  public removeLetterhead(): Observable<ApiResponse<boolean>> {
+    return this.http.delete<ApiResponse<boolean>>(`${this.baseUrl}/company/letterhead`);
   }
 }
 

@@ -468,3 +468,4 @@ WHERE p.party_id = @PartyId;";
         return ledger;
     }
 }
+

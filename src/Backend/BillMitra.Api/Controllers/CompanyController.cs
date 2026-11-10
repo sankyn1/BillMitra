@@ -42,4 +42,48 @@ public class CompanyController : ControllerBase
             return BadRequest(ApiResponse<CompanyProfileDto>.Fail(ex.Message));
         }
     }
+
+    [HttpPut("letterhead-settings")]
+    public async Task<ActionResult<ApiResponse<CompanyProfileDto>>> UpdateLetterheadSettings(
+        [FromBody] UpdateLetterheadSettingsRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var updated = await _companyService.UpdateLetterheadSettingsAsync(request, cancellationToken);
+            return Ok(ApiResponse<CompanyProfileDto>.Ok(updated, "Letterhead settings updated successfully."));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse<CompanyProfileDto>.Fail(ex.Message));
+        }
+    }
+
+    [HttpPost("letterhead")]
+    public async Task<ActionResult<ApiResponse<string>>> UploadLetterhead(
+        [FromBody] UploadLetterheadRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Base64Data))
+        {
+            return BadRequest(ApiResponse<string>.Fail("Base64 image data is required."));
+        }
+
+        try
+        {
+            var path = await _companyService.SaveLetterheadImageAsync(request.Base64Data, request.FileName, cancellationToken);
+            return Ok(ApiResponse<string>.Ok(path, "Letterhead graphic uploaded successfully."));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse<string>.Fail($"Failed to upload letterhead: {ex.Message}"));
+        }
+    }
+
+    [HttpDelete("letterhead")]
+    public async Task<ActionResult<ApiResponse<bool>>> RemoveLetterhead(CancellationToken cancellationToken)
+    {
+        var success = await _companyService.RemoveLetterheadImageAsync(cancellationToken);
+        return Ok(ApiResponse<bool>.Ok(success, "Letterhead removed successfully."));
+    }
 }

@@ -161,3 +161,4 @@ export class PaymentService {
     return this.http.get<ApiResponse<PartyAgingDto>>(`${this.baseUrl}/parties/${partyId}/aging`);
   }
 }
+

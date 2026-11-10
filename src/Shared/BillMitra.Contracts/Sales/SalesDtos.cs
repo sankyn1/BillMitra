@@ -20,7 +20,8 @@ public enum DocumentStatus
     Finalized = 2,
     PartiallyPaid = 3,
     Paid = 4,
-    Cancelled = 5
+    Cancelled = 5,
+    Converted = 6
 }
 
 public enum GstSupplyType
@@ -86,7 +87,15 @@ public sealed record SalesDocumentDto(
     DateTime? FinalizedAtUtc,
     DateTime? CancelledAtUtc,
     string? CancellationReason,
+    Guid? SourceDocumentId,
+    string? SourceDocumentNumber,
+    Guid? ConvertedToDocumentId,
+    bool CanConvert,
     IReadOnlyList<SalesDocumentItemDto> Items
+);
+
+public sealed record ConvertToInvoiceRequest(
+    bool FinalizeImmediately = false
 );
 
 public sealed record CreateOrUpdateSalesDocumentRequest(

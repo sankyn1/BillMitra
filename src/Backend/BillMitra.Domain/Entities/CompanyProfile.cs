@@ -25,6 +25,9 @@ public class CompanyProfile
     public string? UpiId { get; set; }
     public string? InvoiceFooterNotes { get; set; }
     public string? TermsAndConditions { get; set; }
+    public string? LetterheadImagePath { get; set; }
+    public int DefaultLetterheadMode { get; set; } = 1; // 1 = WithLetterhead, 2 = PreprintedStationery
+    public int PreprintedHeaderMarginMm { get; set; } = 50;
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;

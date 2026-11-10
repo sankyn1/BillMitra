@@ -60,6 +60,9 @@ SELECT
     finalized_at_utc as FinalizedAtUtc,
     cancelled_at_utc as CancelledAtUtc,
     cancellation_reason as CancellationReason,
+    source_document_id as SourceDocumentId,
+    source_document_number as SourceDocumentNumber,
+    converted_to_document_id as ConvertedToDocumentId,
     created_by as CreatedBy
 FROM sales_documents
 WHERE id = @Id;";
@@ -149,6 +152,9 @@ SELECT
     finalized_at_utc as FinalizedAtUtc,
     cancelled_at_utc as CancelledAtUtc,
     cancellation_reason as CancellationReason,
+    source_document_id as SourceDocumentId,
+    source_document_number as SourceDocumentNumber,
+    converted_to_document_id as ConvertedToDocumentId,
     created_by as CreatedBy
 FROM sales_documents
 WHERE 1=1";
@@ -212,7 +218,8 @@ INSERT INTO sales_documents (
     sub_total_taxable, cgst_total, sgst_total, igst_total, cess_total,
     total_tax, round_off_amount, grand_total, paid_amount, total_amount_in_words,
     notes, terms_and_conditions, idempotency_key, created_at_utc,
-    finalized_at_utc, cancelled_at_utc, cancellation_reason, created_by
+    finalized_at_utc, cancelled_at_utc, cancellation_reason,
+    source_document_id, source_document_number, converted_to_document_id, created_by
 ) VALUES (
     @Id, @DocumentType, @DocumentStatus, @DocumentNumber, @DraftNumber,
     @DocumentDate, @DueDate, @CompanyId, @PartyId, @CustomerName,
@@ -221,7 +228,8 @@ INSERT INTO sales_documents (
     @SubTotalTaxable, @CgstTotal, @SgstTotal, @IgstTotal, @CessTotal,
     @TotalTax, @RoundOffAmount, @GrandTotal, @PaidAmount, @TotalAmountInWords,
     @Notes, @TermsAndConditions, @IdempotencyKey, @CreatedAtUtc,
-    @FinalizedAtUtc, @CancelledAtUtc, @CancellationReason, @CreatedBy
+    @FinalizedAtUtc, @CancelledAtUtc, @CancellationReason,
+    @SourceDocumentId, @SourceDocumentNumber, @ConvertedToDocumentId, @CreatedBy
 );";
 
         await conn.ExecuteAsync(docSql, new
@@ -261,6 +269,9 @@ INSERT INTO sales_documents (
             doc.FinalizedAtUtc,
             doc.CancelledAtUtc,
             doc.CancellationReason,
+            doc.SourceDocumentId,
+            doc.SourceDocumentNumber,
+            doc.ConvertedToDocumentId,
             doc.CreatedBy
         }, tx);
 
@@ -326,7 +337,10 @@ UPDATE sales_documents SET
     idempotency_key = @IdempotencyKey,
     finalized_at_utc = @FinalizedAtUtc,
     cancelled_at_utc = @CancelledAtUtc,
-    cancellation_reason = @CancellationReason
+    cancellation_reason = @CancellationReason,
+    source_document_id = @SourceDocumentId,
+    source_document_number = @SourceDocumentNumber,
+    converted_to_document_id = @ConvertedToDocumentId
 WHERE id = @Id;";
 
         await conn.ExecuteAsync(docSql, new
@@ -362,7 +376,10 @@ WHERE id = @Id;";
             doc.IdempotencyKey,
             doc.FinalizedAtUtc,
             doc.CancelledAtUtc,
-            doc.CancellationReason
+            doc.CancellationReason,
+            doc.SourceDocumentId,
+            doc.SourceDocumentNumber,
+            doc.ConvertedToDocumentId
         }, tx);
 
         // Replace line items

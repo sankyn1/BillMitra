@@ -15,11 +15,12 @@ public interface ISalesService
     Task<IReadOnlyList<SalesDocumentDto>> GetDocumentsAsync(DocumentType? type = null, DocumentStatus? status = null, DateTime? fromDate = null, DateTime? toDate = null, Guid? partyId = null, string? search = null, CancellationToken ct = default);
     Task<SalesDocumentDto> FinalizeDocumentAsync(Guid id, FinalizeDocumentRequest request, string? user = null, CancellationToken ct = default);
     Task<SalesDocumentDto> CancelDocumentAsync(Guid id, CancelDocumentRequest request, string? user = null, CancellationToken ct = default);
-    Task<byte[]> GeneratePdfAsync(Guid id, string format = "a4", CancellationToken ct = default);
+    Task<SalesDocumentDto> ConvertToTaxInvoiceAsync(Guid proformaId, bool finalizeImmediately = false, string? user = null, CancellationToken ct = default);
+    Task<byte[]> GeneratePdfAsync(Guid id, string format = "a4", bool? withLetterhead = null, CancellationToken ct = default);
 }
 
 public interface IPdfGeneratorService
 {
-    byte[] GenerateDocumentPdf(SalesDocumentDto document, BillMitra.Contracts.Company.CompanyProfileDto company, string format);
+    byte[] GenerateDocumentPdf(SalesDocumentDto document, BillMitra.Contracts.Company.CompanyProfileDto company, string format, bool withLetterhead = true);
 }
 

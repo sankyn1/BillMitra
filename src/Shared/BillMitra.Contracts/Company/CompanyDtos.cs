@@ -23,6 +23,9 @@ public class CompanyProfileDto
     public string? UpiId { get; set; }
     public string? InvoiceFooterNotes { get; set; }
     public string? TermsAndConditions { get; set; }
+    public string? LetterheadImagePath { get; set; }
+    public int DefaultLetterheadMode { get; set; } = 1; // 1 = WithLetterhead, 2 = PreprintedStationery
+    public int PreprintedHeaderMarginMm { get; set; } = 50;
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
 }
@@ -48,5 +51,18 @@ public class UpdateCompanyProfileRequest
     public string? UpiId { get; set; }
     public string? InvoiceFooterNotes { get; set; }
     public string? TermsAndConditions { get; set; }
+    public string? LetterheadImagePath { get; set; }
+    public int DefaultLetterheadMode { get; set; } = 1;
+    public int PreprintedHeaderMarginMm { get; set; } = 50;
 }
+
+public record UpdateLetterheadSettingsRequest(
+    int DefaultLetterheadMode,
+    int PreprintedHeaderMarginMm
+);
+
+public record UploadLetterheadRequest(
+    string Base64Data,
+    string? FileName = null
+);
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SalesService, SalesDocumentDto, DocumentType, DocumentStatus } from '../../core/services/sales.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { DocumentPreviewDialogComponent } from './document-preview-dialog.component';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -22,6 +23,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
+    DocumentPreviewDialogComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -154,11 +156,39 @@ import {
                       } @else if (doc.documentStatus === 2) {
                         <span bmBadge="success">Finalized</span>
                       } @else if (doc.documentStatus === 3) {
+                        <span bmBadge="primary">Partially Paid</span>
+                      } @else if (doc.documentStatus === 4) {
+                        <span bmBadge="success">Paid</span>
+                      } @else if (doc.documentStatus === 5) {
                         <span bmBadge="danger">Cancelled</span>
+                      } @else if (doc.documentStatus === 6) {
+                        <span bmBadge="secondary">Converted</span>
                       }
                     </td>
                     <td bmCell class="bm-align-center">
                       <div class="bm-action-buttons">
+                        <!-- In-App Print & Preview Dialog -->
+                        <button
+                          bmButton="outline"
+                          bmSize="sm"
+                          (click)="openPreview(doc)"
+                          title="Preview, format switcher, and direct print"
+                        >
+                          <i class="pi pi-print"></i> Preview
+                        </button>
+
+                        <!-- Convert Proforma/Quotation to Tax Invoice -->
+                        @if (canConvertToInvoice(doc)) {
+                          <button
+                            bmButton="primary"
+                            bmSize="sm"
+                            (click)="promptConvertToInvoice(doc)"
+                            title="Convert to GST Tax Invoice"
+                          >
+                            <i class="pi pi-sync"></i> Convert
+                          </button>
+                        }
+
                         @if (doc.documentStatus === 1) {
                           <button
                             bmButton="secondary"
@@ -176,33 +206,15 @@ import {
                           >
                             <i class="pi pi-check"></i> Finalize
                           </button>
-                        } @else {
+                        } @else if (doc.documentStatus === 2 || doc.documentStatus === 3) {
                           <button
-                            bmButton="outline"
+                            bmButton="danger"
                             bmSize="sm"
-                            (click)="printPdf(doc.id, 'a4')"
-                            title="Print / PDF (A4)"
+                            (click)="promptCancel(doc)"
+                            title="Cancel Invoice"
                           >
-                            <i class="pi pi-file-pdf"></i> A4
+                            <i class="pi pi-ban"></i>
                           </button>
-                          <button
-                            bmButton="outline"
-                            bmSize="sm"
-                            (click)="printPdf(doc.id, 'thermal')"
-                            title="Print 80mm Thermal Receipt"
-                          >
-                            <i class="pi pi-print"></i> 80mm
-                          </button>
-                          @if (doc.documentStatus === 2) {
-                            <button
-                              bmButton="danger"
-                              bmSize="sm"
-                              (click)="promptCancel(doc)"
-                              title="Cancel Invoice"
-                            >
-                              <i class="pi pi-ban"></i>
-                            </button>
-                          }
                         }
                       </div>
                     </td>
@@ -250,6 +262,14 @@ import {
           </div>
         </div>
       }
+
+      <!-- Document Preview & Direct Print Dialog -->
+      <app-document-preview-dialog
+        [isOpen]="previewOpen()"
+        [documentId]="previewDocId()"
+        [documentNumber]="previewDocNumber()"
+        (closed)="previewOpen.set(false)"
+      ></app-document-preview-dialog>
     </div>
   `,
   styles: [`
@@ -418,10 +438,50 @@ export class InvoiceListComponent implements OnInit {
   cancelTarget = signal<SalesDocumentDto | null>(null);
   cancelReason = '';
 
+  previewOpen = signal<boolean>(false);
+  previewDocId = signal<string>('');
+  previewDocNumber = signal<string>('');
+
   constructor(
     public salesService: SalesService,
     private dialogService: DialogService
   ) {}
+
+  openPreview(doc: SalesDocumentDto): void {
+    this.previewDocId.set(doc.id);
+    this.previewDocNumber.set(doc.documentNumber || doc.draftNumber);
+    this.previewOpen.set(true);
+  }
+
+  canConvertToInvoice(doc: SalesDocumentDto): boolean {
+    return (doc.documentType === DocumentType.Quotation || doc.documentType === DocumentType.ProformaInvoice) &&
+           doc.documentStatus !== DocumentStatus.Cancelled &&
+           doc.documentStatus !== DocumentStatus.Converted;
+  }
+
+  async promptConvertToInvoice(doc: SalesDocumentDto): Promise<void> {
+    const docLabel = doc.documentNumber || doc.draftNumber;
+    const ok = await this.dialogService.confirm(
+      'Convert to Tax Invoice',
+      `Are you sure you want to convert ${this.getDocTypeName(doc.documentType)} "${docLabel}" to an official GST Tax Invoice? All customer details, items, discounts, and taxes will be copied, and "${docLabel}" will be marked as Converted.`,
+      'Convert Now',
+      false,
+      'info'
+    );
+    if (!ok) return;
+
+    this.salesService.convertToTaxInvoice(doc.id, false).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.dialogService.toast(`Successfully converted to Tax Invoice: ${res.data.draftNumber || res.data.documentNumber}`, 'success');
+          this.loadDocuments();
+        }
+      },
+      error: (err) => {
+        this.dialogService.alert('Conversion Failed', err?.error?.message || 'Failed to convert document to invoice.', 'danger');
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.loadDocuments();

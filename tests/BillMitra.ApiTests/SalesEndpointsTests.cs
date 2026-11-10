@@ -104,4 +104,112 @@ public class SalesEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
         var res = await _client.PostAsJsonAsync($"/api/v1/sales/{Guid.NewGuid()}/cancel", cancelReq);
         res.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task ConvertProformaToInvoice_FlowSucceeds_AndLinksSource()
+    {
+        // 1. Create a Proforma Invoice draft
+        var createProformaReq = new CreateOrUpdateSalesDocumentRequest(
+            DocumentType: DocumentType.ProformaInvoice,
+            DocumentDate: DateTime.UtcNow,
+            DueDate: DateTime.UtcNow.AddDays(15),
+            PartyId: null,
+            CustomerName: "Tata Consultancy Services Ltd",
+            CustomerGstin: "27AAACT2727Q1ZW",
+            BillingAddress: "TCS House, Raveline Street, Fort, Mumbai",
+            ShippingAddress: null,
+            PlaceOfSupplyStateCode: "27",
+            IsReverseCharge: false,
+            Notes: "Proforma Estimate for Cloud Setup",
+            TermsAndConditions: "Validity: 15 days",
+            Items: new List<SalesDocumentItemInput>
+            {
+                new(null, "Annual Cloud Support Contract", "998313", 1, "YR", 120000m, 10m, 18m)
+            }
+        );
+
+        var proformaRes = await _client.PostAsJsonAsync("/api/v1/sales/draft", createProformaReq);
+        proformaRes.StatusCode.Should().Be(HttpStatusCode.Created);
+        var proformaBody = await proformaRes.Content.ReadFromJsonAsync<ApiResponse<SalesDocumentDto>>();
+        proformaBody.Should().NotBeNull();
+        var proforma = proformaBody!.Data!;
+        proforma.DocumentType.Should().Be(DocumentType.ProformaInvoice);
+        proforma.DocumentStatus.Should().Be(DocumentStatus.Draft);
+
+        // 2. Convert Proforma to Tax Invoice
+        var convertReq = new ConvertToInvoiceRequest(FinalizeImmediately: false);
+        var convertRes = await _client.PostAsJsonAsync($"/api/v1/sales/{proforma.Id}/convert-to-invoice", convertReq);
+        convertRes.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var convertBody = await convertRes.Content.ReadFromJsonAsync<ApiResponse<SalesDocumentDto>>();
+        convertBody.Should().NotBeNull();
+        var newInvoice = convertBody!.Data!;
+        newInvoice.DocumentType.Should().Be(DocumentType.TaxInvoice);
+        newInvoice.SourceDocumentId.Should().Be(proforma.Id);
+        newInvoice.SourceDocumentNumber.Should().Be(proforma.DocumentNumber ?? proforma.DraftNumber);
+        newInvoice.CustomerName.Should().Be(proforma.CustomerName);
+        newInvoice.GrandTotal.Should().Be(proforma.GrandTotal);
+
+        // 3. Verify Source Proforma status is now Converted
+        var fetchSourceRes = await _client.GetAsync($"/api/v1/sales/{proforma.Id}");
+        fetchSourceRes.StatusCode.Should().Be(HttpStatusCode.OK);
+        var sourceBody = await fetchSourceRes.Content.ReadFromJsonAsync<ApiResponse<SalesDocumentDto>>();
+        sourceBody.Should().NotBeNull();
+        sourceBody!.Data!.DocumentStatus.Should().Be(DocumentStatus.Converted);
+        sourceBody.Data.ConvertedToDocumentId.Should().Be(newInvoice.Id);
+        sourceBody.Data.CanConvert.Should().BeFalse();
+
+        // 4. Attempting duplicate conversion should be rejected
+        var duplicateRes = await _client.PostAsJsonAsync($"/api/v1/sales/{proforma.Id}/convert-to-invoice", convertReq);
+        duplicateRes.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task LetterheadSettings_UpdateAndPreprintedPdfGeneration_Succeeds()
+    {
+        // 1. Update letterhead mode to Preprinted stationery
+        var settingsReq = new BillMitra.Contracts.Company.UpdateLetterheadSettingsRequest(
+            DefaultLetterheadMode: 2,
+            PreprintedHeaderMarginMm: 55
+        );
+        var updateRes = await _client.PutAsJsonAsync("/api/v1/company/letterhead-settings", settingsReq);
+        updateRes.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var profileRes = await _client.GetAsync("/api/v1/company/profile");
+        profileRes.StatusCode.Should().Be(HttpStatusCode.OK);
+        var profileBody = await profileRes.Content.ReadFromJsonAsync<ApiResponse<BillMitra.Contracts.Company.CompanyProfileDto>>();
+        profileBody.Should().NotBeNull();
+        profileBody!.Data!.DefaultLetterheadMode.Should().Be(2);
+        profileBody.Data.PreprintedHeaderMarginMm.Should().Be(55);
+
+        // 2. Create invoice and verify pre-printed stationery PDF generation
+        var createReq = new CreateOrUpdateSalesDocumentRequest(
+            DocumentType: DocumentType.TaxInvoice,
+            DocumentDate: DateTime.UtcNow,
+            DueDate: null,
+            PartyId: null,
+            CustomerName: "Larsen & Toubro Ltd",
+            CustomerGstin: "27AAACL0149P1ZZ",
+            BillingAddress: "Powai, Mumbai",
+            ShippingAddress: null,
+            PlaceOfSupplyStateCode: "27",
+            IsReverseCharge: false,
+            Notes: null,
+            TermsAndConditions: null,
+            Items: new List<SalesDocumentItemInput>
+            {
+                new(null, "Industrial Valves", "8481", 4, "NOS", 7500m, 0, 18m)
+            }
+        );
+        var draftRes = await _client.PostAsJsonAsync("/api/v1/sales/draft", createReq);
+        var draftBody = await draftRes.Content.ReadFromJsonAsync<ApiResponse<SalesDocumentDto>>();
+        var docId = draftBody!.Data!.Id;
+
+        // Generate PDF without letterhead (pre-printed stationery)
+        var pdfRes = await _client.GetAsync($"/api/v1/sales/{docId}/pdf?format=a4&withLetterhead=false");
+        pdfRes.StatusCode.Should().Be(HttpStatusCode.OK);
+        pdfRes.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
+        var pdfBytes = await pdfRes.Content.ReadAsByteArrayAsync();
+        pdfBytes.Length.Should().BeGreaterThan(1000);
+    }
 }

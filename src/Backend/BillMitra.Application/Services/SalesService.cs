@@ -388,7 +388,113 @@ public class SalesService : ISalesService
         return MapToDto(updated);
     }
 
-    public async Task<byte[]> GeneratePdfAsync(Guid id, string format = "a4", CancellationToken ct = default)
+    public async Task<SalesDocumentDto> ConvertToTaxInvoiceAsync(Guid proformaId, bool finalizeImmediately = false, string? user = null, CancellationToken ct = default)
+    {
+        var proforma = await _salesDocRepo.GetByIdAsync(proformaId, ct)
+            ?? throw new KeyNotFoundException($"Document with ID {proformaId} was not found.");
+
+        if (!proforma.CanConvert())
+        {
+            throw new InvalidOperationException(
+                $"Document {proforma.DocumentNumber ?? proforma.DraftNumber} cannot be converted. Only active Proforma Invoices or Quotations that have not already been converted can be converted to a Tax Invoice.");
+        }
+
+        var company = await _companyRepo.GetPrimaryCompanyAsync(ct)
+            ?? throw new InvalidOperationException("Company profile not initialized.");
+
+        var fy = await _financialYearRepo.GetActiveFinancialYearAsync(ct)
+            ?? throw new InvalidOperationException("Active financial year not found.");
+
+        var now = DateTime.UtcNow;
+        var draftNumber = $"DFT-{now:yyMMdd}-{Random.Shared.Next(1000, 9999)}";
+        var invoiceId = Guid.NewGuid();
+
+        var newInvoice = new SalesDocument
+        {
+            Id = invoiceId,
+            CompanyId = company.Id,
+            PartyId = proforma.PartyId,
+            DocumentType = BillMitra.Domain.Enums.DocumentType.TaxInvoice,
+            DocumentStatus = BillMitra.Domain.Enums.DocumentStatus.Draft,
+            DraftNumber = draftNumber,
+            DocumentDate = DateTime.Today,
+            DueDate = DateTime.Today.AddDays(15),
+            CustomerName = proforma.CustomerName,
+            CustomerGstin = proforma.CustomerGstin,
+            BillingAddress = proforma.BillingAddress,
+            ShippingAddress = proforma.ShippingAddress,
+            PlaceOfSupplyStateCode = proforma.PlaceOfSupplyStateCode,
+            SupplierStateCode = proforma.SupplierStateCode,
+            IsReverseCharge = proforma.IsReverseCharge,
+            SupplyType = proforma.SupplyType,
+            SubTotalTaxable = proforma.SubTotalTaxable,
+            CgstTotal = proforma.CgstTotal,
+            SgstTotal = proforma.SgstTotal,
+            IgstTotal = proforma.IgstTotal,
+            CessTotal = proforma.CessTotal,
+            TotalTax = proforma.TotalTax,
+            RoundOffAmount = proforma.RoundOffAmount,
+            GrandTotal = proforma.GrandTotal,
+            PaidAmount = 0,
+            TotalAmountInWords = proforma.TotalAmountInWords,
+            Notes = proforma.Notes,
+            TermsAndConditions = proforma.TermsAndConditions,
+            SourceDocumentId = proforma.Id,
+            SourceDocumentNumber = proforma.DocumentNumber ?? proforma.DraftNumber,
+            CreatedAtUtc = now,
+            CreatedBy = user ?? "system",
+            Items = proforma.Items.Select(item => new SalesDocumentItem
+            {
+                Id = Guid.NewGuid(),
+                SalesDocumentId = invoiceId,
+                LineNumber = item.LineNumber,
+                ProductId = item.ProductId,
+                ItemName = item.ItemName,
+                HsnSacCode = item.HsnSacCode,
+                Quantity = item.Quantity,
+                UnitCode = item.UnitCode,
+                UnitPrice = item.UnitPrice,
+                DiscountPercent = item.DiscountPercent,
+                DiscountAmount = item.DiscountAmount,
+                TaxableAmount = item.TaxableAmount,
+                GstRatePercent = item.GstRatePercent,
+                CgstRatePercent = item.CgstRatePercent,
+                CgstAmount = item.CgstAmount,
+                SgstRatePercent = item.SgstRatePercent,
+                SgstAmount = item.SgstAmount,
+                IgstRatePercent = item.IgstRatePercent,
+                IgstAmount = item.IgstAmount,
+                CessRatePercent = item.CessRatePercent,
+                CessAmount = item.CessAmount,
+                TotalAmount = item.TotalAmount
+            }).ToList()
+        };
+
+        if (finalizeImmediately)
+        {
+            var invoiceNumber = await _sequenceRepo.AllocateNextNumberAsync(fy.Id, BillMitra.Domain.Enums.DocumentType.TaxInvoice, ct);
+            newInvoice.DocumentNumber = invoiceNumber;
+            newInvoice.DocumentStatus = BillMitra.Domain.Enums.DocumentStatus.Finalized;
+            newInvoice.FinalizedAtUtc = now;
+        }
+
+        var createdInvoice = await _salesDocRepo.InsertAsync(newInvoice, ct);
+
+        // Update proforma status to Converted
+        proforma.DocumentStatus = BillMitra.Domain.Enums.DocumentStatus.Converted;
+        proforma.ConvertedToDocumentId = createdInvoice.Id;
+        await _salesDocRepo.UpdateAsync(proforma, ct);
+
+        _logger.LogInformation(
+            "Successfully converted {SourceDoc} to Tax Invoice {TargetDoc} (ID: {InvoiceId})",
+            proforma.DocumentNumber ?? proforma.DraftNumber,
+            createdInvoice.DocumentNumber ?? createdInvoice.DraftNumber,
+            createdInvoice.Id);
+
+        return MapToDto(createdInvoice);
+    }
+
+    public async Task<byte[]> GeneratePdfAsync(Guid id, string format = "a4", bool? withLetterhead = null, CancellationToken ct = default)
     {
         var doc = await GetByIdAsync(id, ct)
             ?? throw new KeyNotFoundException($"Document with ID {id} was not found.");
@@ -417,11 +523,17 @@ public class SalesService : ISalesService
             BankIfsc = company.BankIfsc,
             BankBranch = company.BankBranch,
             UpiId = company.UpiId,
+            InvoiceFooterNotes = company.InvoiceFooterNotes,
+            TermsAndConditions = company.TermsAndConditions,
+            LetterheadImagePath = company.LetterheadImagePath,
+            DefaultLetterheadMode = company.DefaultLetterheadMode,
+            PreprintedHeaderMarginMm = company.PreprintedHeaderMarginMm,
             CreatedAtUtc = company.CreatedAtUtc,
             UpdatedAtUtc = company.UpdatedAtUtc
         };
 
-        return _pdfGenerator.GenerateDocumentPdf(doc, companyDto, format);
+        var shouldIncludeLetterhead = withLetterhead ?? (company.DefaultLetterheadMode == 1);
+        return _pdfGenerator.GenerateDocumentPdf(doc, companyDto, format, shouldIncludeLetterhead);
     }
 
     private static SalesDocumentDto MapToDto(SalesDocument doc)
@@ -460,6 +572,10 @@ public class SalesService : ISalesService
             FinalizedAtUtc: doc.FinalizedAtUtc,
             CancelledAtUtc: doc.CancelledAtUtc,
             CancellationReason: doc.CancellationReason,
+            SourceDocumentId: doc.SourceDocumentId,
+            SourceDocumentNumber: doc.SourceDocumentNumber,
+            ConvertedToDocumentId: doc.ConvertedToDocumentId,
+            CanConvert: doc.CanConvert(),
             Items: doc.Items.OrderBy(i => i.LineNumber).Select(i => new SalesDocumentItemDto(
                 Id: i.Id,
                 ProductId: i.ProductId,
