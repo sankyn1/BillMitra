@@ -1,7 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
 import { SystemService } from './core/services/system.service';
+import { SetupService } from './core/services/setup.service';
+import { SetupWizardComponent } from './features/setup/setup-wizard.component';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -9,9 +10,9 @@ import {
   BmPanelBodyDirective,
   BmPanelFooterDirective,
   BmTableDirective,
+  BmTableHeaderCellDirective,
   BmTableRowDirective,
   BmTableCellDirective,
-  BmInputDirective,
   BmBadgeDirective
 } from './shared/directives';
 
@@ -20,12 +21,14 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    SetupWizardComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
     BmPanelBodyDirective,
     BmPanelFooterDirective,
     BmTableDirective,
+    BmTableHeaderCellDirective,
     BmTableRowDirective,
     BmTableCellDirective,
     BmBadgeDirective
@@ -35,12 +38,18 @@ import {
 })
 export class App implements OnInit {
   protected readonly systemService = inject(SystemService);
+  protected readonly setupService = inject(SetupService);
+
   protected isSidebarCollapsed = false;
   protected activeMenu = 'dashboard';
 
   ngOnInit(): void {
-    // Check initial health on load
+    this.refreshAll();
+  }
+
+  refreshAll(): void {
     this.systemService.checkHealth();
+    this.setupService.checkStatus().subscribe();
   }
 
   toggleSidebar(): void {
@@ -49,5 +58,9 @@ export class App implements OnInit {
 
   setActiveMenu(menu: string): void {
     this.activeMenu = menu;
+  }
+
+  onSetupCompleted(): void {
+    this.refreshAll();
   }
 }

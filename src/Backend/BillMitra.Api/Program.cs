@@ -1,6 +1,7 @@
 using BillMitra.Api.Middleware;
 using BillMitra.Application;
 using BillMitra.Infrastructure;
+using BillMitra.Infrastructure.Data;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,10 +39,17 @@ builder.Services.AddCors(options =>
 });
 
 // Register Application & Infrastructure
-builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 var app = builder.Build();
+
+// Automatically ensure core schema exists
+using (var scope = app.Services.CreateScope())
+{
+    var initializer = scope.ServiceProvider.GetRequiredService<DatabaseInitializer>();
+    await initializer.InitializeAsync();
+}
 
 // Configure Middleware Pipeline
 app.UseMiddleware<ExceptionHandlingMiddleware>();

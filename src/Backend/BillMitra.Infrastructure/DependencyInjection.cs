@@ -1,5 +1,6 @@
 using BillMitra.Application.Common.Interfaces;
 using BillMitra.Infrastructure.Data;
+using BillMitra.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,21 +9,30 @@ namespace BillMitra.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection") 
+        // Hybrid Connection Factory supporting PostgreSQL, SQL Server (Local Express), and SQLite
+        services.AddSingleton<HybridDbConnectionFactory>();
+        services.AddSingleton<IDbConnectionFactory>(sp => sp.GetRequiredService<HybridDbConnectionFactory>());
+        services.AddSingleton<DatabaseInitializer>();
+
+        // EF Core Registration for migrations
+        var postgresConnection = configuration.GetConnectionString("DefaultConnection") 
             ?? "Host=localhost;Port=5432;Database=billmitra_dev;Username=postgres;Password=postgres;";
 
-        // Dapper connection factory for high-performance runtime access
-        services.AddSingleton<IDbConnectionFactory, PostgreSqlDbConnectionFactory>();
-
-        // EF Core strictly for migrations / design-time tooling
         services.AddDbContext<BillMitraDbContext>(options =>
         {
-            options.UseNpgsql(connectionString, b => b.MigrationsAssembly(typeof(BillMitraDbContext).Assembly.FullName));
+            options.UseNpgsql(postgresConnection, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(BillMitraDbContext).Assembly.FullName);
+            });
         });
+
+        // Repositories
+        services.AddScoped<ICompanyRepository, CompanyRepository>();
+        services.AddScoped<IFinancialYearRepository, FinancialYearRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         return services;
     }
 }
-

@@ -37,3 +37,4 @@ public class AppSetting
     public string? Description { get; set; }
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }
+

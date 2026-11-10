@@ -23,6 +23,8 @@ public class CompanyProfile
     public string? BankIfsc { get; set; }
     public string? BankBranch { get; set; }
     public string? UpiId { get; set; }
+    public string? InvoiceFooterNotes { get; set; }
+    public string? TermsAndConditions { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;

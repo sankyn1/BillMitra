@@ -32,7 +32,25 @@ export class BmTableRowDirective implements OnInit {
 }
 
 @Directive({
-  selector: 'th[bmTableHeaderCell], td[bmTableCell]',
+  selector: 'th[bmTableHeaderCell]',
+  standalone: true
+})
+export class BmTableHeaderCellDirective implements OnInit {
+  @Input() bmAlign: 'left' | 'center' | 'right' = 'left';
+
+  constructor(private el: ElementRef, private renderer: Renderer2) {}
+
+  ngOnInit(): void {
+    const el = this.el.nativeElement;
+    this.renderer.addClass(el, 'bm-table-header-cell');
+    if (this.bmAlign !== 'left') {
+      this.renderer.addClass(el, `bm-align-${this.bmAlign}`);
+    }
+  }
+}
+
+@Directive({
+  selector: 'td[bmTableCell]',
   standalone: true
 })
 export class BmTableCellDirective implements OnInit {
@@ -48,4 +66,3 @@ export class BmTableCellDirective implements OnInit {
     }
   }
 }
-
