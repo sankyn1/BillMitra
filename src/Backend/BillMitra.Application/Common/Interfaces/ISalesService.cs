@@ -22,3 +22,4 @@ public interface IPdfGeneratorService
 {
     byte[] GenerateDocumentPdf(SalesDocumentDto document, BillMitra.Contracts.Company.CompanyProfileDto company, string format);
 }
+

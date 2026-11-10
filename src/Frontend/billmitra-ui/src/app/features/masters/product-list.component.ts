@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MastersService, ProductDto, CreateOrUpdateProductRequest } from '../../core/services/masters.service';
+import { DialogService } from '../../shared/services/dialog.service';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -290,6 +291,7 @@ import {
 })
 export class ProductListComponent implements OnInit {
   protected readonly mastersService = inject(MastersService);
+  protected readonly dialogService = inject(DialogService);
 
   public searchQuery = '';
   public selectedCategory = '';
@@ -368,9 +370,17 @@ export class ProductListComponent implements OnInit {
     }
   }
 
-  deleteProduct(id: string): void {
-    if (confirm('Are you sure you want to mark this item as inactive?')) {
-      this.mastersService.deleteProduct(id).subscribe();
+  async deleteProduct(id: string): Promise<void> {
+    const confirmed = await this.dialogService.confirm(
+      'Deactivate Item',
+      'Are you sure you want to mark this item as inactive?',
+      'Deactivate',
+      true
+    );
+    if (confirmed) {
+      this.mastersService.deleteProduct(id).subscribe({
+        next: () => this.dialogService.toast('Product marked as inactive.', 'info')
+      });
     }
   }
 

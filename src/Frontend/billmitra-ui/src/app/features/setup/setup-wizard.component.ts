@@ -14,8 +14,7 @@ import { BmInputDirective, BmBadgeDirective } from '../../shared/directives/bm-c
     FormsModule,
     BmButtonDirective,
     BmPanelDirective,
-    BmInputDirective,
-    BmBadgeDirective
+    BmInputDirective
   ],
   template: `
     <div class="setup-container">

@@ -413,6 +413,14 @@ select.bm-input option:disabled {
   background-color: var(--bm-secondary-light);
   color: var(--bm-secondary);
 }
+.bm-badge-primary {
+  background-color: var(--bm-primary-light);
+  color: var(--bm-primary);
+}
+.bm-badge-secondary {
+  background-color: var(--bm-secondary-light);
+  color: var(--bm-secondary);
+}
 .bm-badge-dot::before {
   content: "";
   display: inline-block;

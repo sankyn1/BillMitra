@@ -49,3 +49,16 @@ public enum PaymentMode
     DebitCard = 6
 }
 
+public enum PaymentType
+{
+    Receipt = 1,
+    Payment = 2
+}
+
+public enum PaymentStatus
+{
+    Active = 1,
+    Reversed = 2
+}
+
+

@@ -1,48 +1,48 @@
 # BillMitra – Project Status & Milestone Tracker
 
 **Current Date:** November 10, 2026  
-**Current State:** MVP-3 Completed – Ready for MVP-4  
+**Current State:** MVP-4 Completed – Ready for MVP-5  
 **Active Lead:** Principal Software Architect & Technical Lead (Antigravity)  
 
 ---
 
 ## 1. Executive Status Summary
 
-**MVP-3 (GST Calculation & Sales Documents Lifecycle)** has been completely implemented, verified with automated tests, and packaged into the Day-1 runnable Windows executable (`artifacts/development/BillMitra.exe`).
+**MVP-4 (Payments, Receipts, Multi-Invoice Allocation & Customer/Supplier Ledgers)** and the **Centralized Generic Dialog & Toast System** have been completely implemented, verified with automated tests, and packaged into the Day-1 runnable Windows executable (`artifacts/development/BillMitra.exe`).
 
-### Key MVP-3 Accomplishments
-1. **Central GST Calculation Engine**:
-   * Intra-State (`CGST` + `SGST`, 50/50 split) vs. Inter-State (`IGST`) determination using Supplier State Code vs. Place of Supply (POS).
-   * Reverse Charge Mechanism (RCM) support.
-   * Line-item discounts, taxable value derivation, cess percentage handling.
-   * Nearest Rupee round-off calculation complying with Rule 46 of CGST Rules.
-   * Indian Currency to Words converter (`IndianCurrencyHelper.ConvertToWords`, e.g. *"Rupees One Lakh Six Thousand Two Hundred Only"*).
-2. **Statutory Document Numbering Engine**:
-   * Concurrency-safe atomic number allocation using pessimistic database locks (`document_sequences`).
-   * Rule 46 16-character maximum boundary enforcement (e.g. `INV/26-27/0001` - 14 chars).
-3. **Immutable Document Lifecycle & Snapshot**:
-   * States: `Draft` $\rightarrow$ `Finalized` $\rightarrow$ `Cancelled`.
-   * Finalized invoices freeze supplier, customer, items, and tax breakdown snapshots.
-   * Statutory preservation: finalized documents are never deleted; cancellation requires an audit reason and retains the number.
-   * Idempotency key support to eliminate duplicate invoice generation on retries.
-4. **QuestPDF Print & Export Engine**:
-   * Professional GST Tax Invoice in **A4** and **A5** formats with complete tax breakdown, bank details, and authorized signatory.
-   * **80mm POS Thermal Slip** format for retail counters (`format=thermal`).
-   * Built with bundled Lato typography.
-5. **Modern Generic UI & Dropdown Redesign**:
-   * Upgraded dropdown controls with dedicated `[bmSelect]` and `select[bmInput]` directive styling.
-   * Replaced raw OS chrome with brand-consistent SVG chevron arrows, hover effects, and focus glow.
-   * Interactive **Sales Invoice List (`app-invoice-list`)**: search, status filtering, type filtering, PDF download triggers, and cancel workflow.
-   * Fast **Billing Screen (`app-invoice-editor`)**: party picker with auto-filling, real-time GST recalculation, item grid with master product picker, and instant grand total summary.
-6. **Quality Assurance & Verification**:
-   * Automated test suite expanded to **41 passing tests** (100% success rate):
+### Key MVP-4 Accomplishments
+1. **Centralized Generic Dialog & Notification System**:
+   * Removed all raw browser `window.alert()` and `window.confirm()` calls across product masters, party masters, invoice management, billing editor, and payment flows.
+   * Implemented `DialogService` (signals-based) with modal backdrops, custom SVG/PrimeIcons status emblems, customizable actions, destructive styling, and auto-dismissing toast notifications (`BmDialogComponent`).
+2. **Payments & Receipts Foundation**:
+   * Customer Inward Receipts (`PaymentType.Receipt`) and Supplier Outward Payments (`PaymentType.Payment`).
+   * Multi-mode payment support: Cash, Bank Transfer (NEFT/RTGS/IMPS), Cheque/DD, UPI (Google Pay, PhonePe, Paytm), Credit Card, and Debit Card.
+   * Concurrency-safe atomic voucher numbering (`RCP/26-27/0001` for receipts, `PMT/26-27/0001` for outward payments).
+   * Advance balance calculation: unallocated payments are preserved on customer/supplier accounts as advance credit.
+3. **Multi-Invoice FIFO & Selective Allocation**:
+   * One payment voucher can be distributed across multiple outstanding invoices.
+   * Invariant validation: Allocations cannot exceed the payment amount or the remaining outstanding balance of any invoice.
+   * Single-click **Auto-Allocate (FIFO)** button to distribute payments across open invoices from oldest to newest.
+   * Automatic invoice balance tracking: Invoices transition between `Finalized` $\rightarrow$ `PartiallyPaid` $\rightarrow$ `Paid`.
+4. **Customer & Supplier Transaction Ledgers**:
+   * Comprehensive chronological statement of accounts for any party.
+   * Real-time running balance calculation with standard Indian accounting $Dr / Cr$ indicators.
+   * Detailed breakdown across Invoices (Debit), Receipts (Credit), Payments, and Reversals.
+5. **Overdue Aging Analysis**:
+   * Automated aging buckets: **Current (0-30 days)**, **31-60 days**, **61-90 days**, and **Overdue (90+ days)**.
+   * Instant aging cards in the ledger view for active debt collection.
+6. **Auditable Transaction Reversals**:
+   * Financial records are never deleted.
+   * Reversals require a mandatory audit reason (`payment_reversals` table).
+   * Payment status transitions to `Reversed`, automatically restoring all linked invoice outstanding balances.
+7. **Quality Assurance & Verification**:
+   * Automated test suite expanded to **70 passing tests** (100% success rate across all test projects):
      * Architecture Tests: 6 passed (Clean Architecture verified)
-     * Unit Tests: 25 passed (GST intra/inter state, rounding, currency to words, Rule 46 numbering, HSN validation, GST rate tiers, Password Hasher)
+     * Unit Tests: 52 passed (Payment allocation math, bounds enforcement, aging bucket classification, GST intra/inter state, rounding, currency to words, Rule 46 numbering, HSN validation)
      * Integration Tests: 2 passed (Dapper resiliency)
-     * API Contract Tests: 8 passed (Masters CRUD, Setup validation, Health probes)
-     * Sales API Tests: 3 passed (GST calculation, Draft $\rightarrow$ Finalize $\rightarrow$ PDF generation flow, Cancellation validation)
-7. **Continuous Executable Delivery**:
-   * Day-1 runnable Windows executable generated and verified at `artifacts\development\BillMitra.exe`.
+     * API Contract Tests: 12 passed (Payment and ledger workflow end-to-end, partial payment transitions, reversal restore, invoice draft & finalize, PDF download, master CRUD)
+8. **Continuous Executable Delivery**:
+   * Day-1 runnable Windows executable generated and verified at `artifacts\development\BillMitra.exe` (v0.5.0-beta.1).
 
 ---
 
@@ -55,8 +55,8 @@
 | **MVP-1** | **Windows Shell & Setup** | First-run setup wizard, company initialization, admin credentials, data directories | **COMPLETED** | `artifacts/development/BillMitra.exe` |
 | **MVP-2** | **Masters & Catalog** | Products, categories, units, HSN/SAC, customers, suppliers, quick seeding | **COMPLETED** | `artifacts/development/BillMitra.exe` (v0.3.0) |
 | **MVP-3** | **GST Billing & Sales Docs** | Central GST calculator, atomic sequence numbering, immutable snapshots, QuestPDF | **COMPLETED** | `artifacts/development/BillMitra.exe` (v0.4.0) |
-| **MVP-4** | **Payments & Ledger** | Receipts, multi-invoice allocations, aging, customer/supplier ledgers | **READY TO START** | Development Build v0.5.0 |
-| **MVP-5** | **GST Returns (GSTR-1/3B)** | GSTR-1 JSON export, GSTR-3B summary, HSN register, provider adapter baseline | Queued | Development Build v0.6.0 |
+| **MVP-4** | **Payments & Ledger** | Receipts, multi-invoice allocations, aging, customer/supplier ledgers | **COMPLETED** | `artifacts/development/BillMitra.exe` (v0.5.0) |
+| **MVP-5** | **GST Returns (GSTR-1/3B)** | GSTR-1 JSON export, GSTR-3B summary, HSN register, provider adapter baseline | **READY TO START** | Development Build v0.6.0 |
 | **MVP-6** | **E-Way Bill & E-Invoice** | E-Way Bill workflows, IRN generation, signed QR code rendering, IRP sandbox | Queued | Development Build v0.7.0 |
 | **MVP-7** | **Purchases & Expenses** | Inward purchase invoices, ITC eligibility, expense categorization | Queued | Development Build v0.8.0 |
 | **MVP-8** | **Full Inventory** | Warehouses, stock transactions ledger, batch/expiry, serials, valuation (FIFO/WA) | Queued | Development Build v0.9.0 |
@@ -73,13 +73,13 @@ Test run for BillMitra.ArchitectureTests.dll (net10.0)
 Passed! - Failed: 0, Passed: 6, Skipped: 0, Total: 6
 
 Test run for BillMitra.UnitTests.dll (net10.0)
-Passed! - Failed: 0, Passed: 25, Skipped: 0, Total: 25
+Passed! - Failed: 0, Passed: 52, Skipped: 0, Total: 52
 
 Test run for BillMitra.IntegrationTests.dll (net10.0)
 Passed! - Failed: 0, Passed: 2, Skipped: 0, Total: 2
 
 Test run for BillMitra.ApiTests.dll (net10.0)
-Passed! - Failed: 0, Passed: 11, Skipped: 0, Total: 11
+Passed! - Failed: 0, Passed: 12, Skipped: 0, Total: 12
 
-OVERALL RESULT: 44 Passed, 0 Failed, 0 Skipped (100% Success)
+OVERALL RESULT: 70 Passed, 0 Failed, 0 Skipped (100% Success)
 ```

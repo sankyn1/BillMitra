@@ -159,3 +159,4 @@ public class GstCalculationEngineTests
         formatted.Length.Should().BeLessThanOrEqualTo(16);
     }
 }
+

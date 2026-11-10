@@ -89,6 +89,16 @@
           <span class="bm-nav-label">Credit & Debit Notes</span>
         </a>
 
+        <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">PAYMENTS & LEDGERS</div>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'payments'" (click)="setActiveMenu('payments')">
+          <i class="pi pi-credit-card"></i>
+          <span class="bm-nav-label">Payments & Receipts</span>
+        </a>
+        <a class="bm-nav-item" [class.active]="activeMenu === 'party-ledger'" (click)="setActiveMenu('party-ledger')">
+          <i class="pi pi-book"></i>
+          <span class="bm-nav-label">Party Ledgers & Aging</span>
+        </a>
+
         <div class="bm-nav-section-title" *ngIf="!isSidebarCollapsed">STATUTORY & SYSTEM</div>
         <a class="bm-nav-item" [class.active]="activeMenu === 'gst'" (click)="setActiveMenu('gst')">
           <i class="pi pi-chart-bar"></i>
@@ -109,7 +119,7 @@
       </nav>
 
       <div class="bm-sidebar-footer" *ngIf="!isSidebarCollapsed">
-        <span class="bm-footer-version">v0.4.0-beta (MVP-3)</span>
+        <span class="bm-footer-version">v0.5.0-beta (MVP-4)</span>
         <span class="bm-footer-mode">Offline First</span>
       </div>
     </aside>
@@ -124,6 +134,10 @@
       <app-invoice-list (createNew)="openNewInvoice()" (editInvoice)="openEditInvoice($event)"></app-invoice-list>
       } @else if (activeMenu === 'new-invoice') {
       <app-invoice-editor [editingId]="activeInvoiceId" (navigateBack)="setActiveMenu('invoices')" (invoiceSaved)="setActiveMenu('invoices')"></app-invoice-editor>
+      } @else if (activeMenu === 'payments') {
+      <app-payment-list (openPartyLedger)="setActiveMenu('party-ledger')"></app-payment-list>
+      } @else if (activeMenu === 'party-ledger') {
+      <app-party-ledger (navigateBack)="setActiveMenu('payments')"></app-party-ledger>
       } @else {
       <!-- Dashboard Overview -->
       <div class="bm-content-header">
@@ -132,6 +146,10 @@
           <p class="bm-page-subtitle">Commercial GST Billing, Real-Time Inventory & Operational Accounting Baseline</p>
         </div>
         <div class="bm-header-buttons">
+          <button bmButton bmVariant="outline" bmSize="md" (click)="setActiveMenu('payments')">
+            <i class="pi pi-credit-card"></i>
+            <span>Payments & Ledgers</span>
+          </button>
           <button bmButton bmVariant="outline" bmSize="md" (click)="setActiveMenu('products')">
             <i class="pi pi-box"></i>
             <span>Open Item Master</span>
@@ -260,3 +278,6 @@
   </div>
 </div>
 }
+
+<!-- Centralized Professional Dialog & Toast System -->
+<app-bm-dialog></app-bm-dialog>

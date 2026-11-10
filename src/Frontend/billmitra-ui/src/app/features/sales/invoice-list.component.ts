@@ -2,6 +2,7 @@ import { Component, OnInit, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SalesService, SalesDocumentDto, DocumentType, DocumentStatus } from '../../core/services/sales.service';
+import { DialogService } from '../../shared/services/dialog.service';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -417,7 +418,10 @@ export class InvoiceListComponent implements OnInit {
   cancelTarget = signal<SalesDocumentDto | null>(null);
   cancelReason = '';
 
-  constructor(public salesService: SalesService) {}
+  constructor(
+    public salesService: SalesService,
+    private dialogService: DialogService
+  ) {}
 
   ngOnInit(): void {
     this.loadDocuments();
@@ -444,18 +448,24 @@ export class InvoiceListComponent implements OnInit {
     }
   }
 
-  finalizeInvoice(id: string): void {
-    if (!confirm('Finalizing will permanently assign a statutory consecutive invoice number (Rule 46). Proceed?')) {
-      return;
-    }
+  async finalizeInvoice(id: string): Promise<void> {
+    const ok = await this.dialogService.confirm(
+      'Finalize Invoice',
+      'Finalizing will permanently assign a statutory consecutive invoice number (Rule 46) and lock the document. Proceed?',
+      'Finalize & Issue',
+      false,
+      'warning'
+    );
+    if (!ok) return;
 
     this.salesService.finalizeDocument(id).subscribe({
       next: (res) => {
         if (res.success) {
+          this.dialogService.toast(`Invoice ${res.data.documentNumber} finalized successfully!`, 'success');
           this.loadDocuments();
         }
       },
-      error: (err) => alert(err.error?.message || 'Failed to finalize invoice.')
+      error: (err) => this.dialogService.alert('Finalization Failed', err.error?.message || 'Failed to finalize invoice.', 'danger')
     });
   }
 
@@ -473,10 +483,11 @@ export class InvoiceListComponent implements OnInit {
       next: (res) => {
         if (res.success) {
           this.showCancelModal.set(false);
+          this.dialogService.toast(`Document ${doc.documentNumber} cancelled.`, 'warning');
           this.loadDocuments();
         }
       },
-      error: (err) => alert(err.error?.message || 'Failed to cancel invoice.')
+      error: (err) => this.dialogService.alert('Cancellation Error', err.error?.message || 'Failed to cancel invoice.', 'danger')
     });
   }
 
@@ -490,7 +501,8 @@ export class InvoiceListComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Failed to download invoice PDF.')
+      error: () => this.dialogService.alert('Download Error', 'Failed to generate or download the invoice PDF.', 'danger')
     });
   }
 }
+

@@ -36,6 +36,8 @@ public class SalesDocument
     public decimal TotalTax { get; set; }
     public decimal RoundOffAmount { get; set; }
     public decimal GrandTotal { get; set; }
+    public decimal PaidAmount { get; set; }
+    public decimal OutstandingBalance => Math.Max(0, GrandTotal - PaidAmount);
     public string TotalAmountInWords { get; set; } = string.Empty;
 
     public string? Notes { get; set; }

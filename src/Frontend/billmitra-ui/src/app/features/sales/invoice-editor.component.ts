@@ -12,6 +12,7 @@ import {
 } from '../../core/services/sales.service';
 import { MastersService, PartyDto, ProductDto } from '../../core/services/masters.service';
 import { SetupService } from '../../core/services/setup.service';
+import { DialogService } from '../../shared/services/dialog.service';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -579,7 +580,8 @@ export class InvoiceEditorComponent implements OnInit {
   constructor(
     private salesService: SalesService,
     public mastersService: MastersService,
-    private setupService: SetupService
+    private setupService: SetupService,
+    private dialogService: DialogService
   ) {}
 
   ngOnInit(): void {
@@ -745,8 +747,8 @@ export class InvoiceEditorComponent implements OnInit {
     });
   }
 
-  saveDraft(): void {
-    if (!this.validateForm()) return;
+  async saveDraft(): Promise<void> {
+    if (!(await this.validateForm())) return;
 
     this.isSaving.set(true);
     this.form.items = this.items.map(i => ({
@@ -768,20 +770,28 @@ export class InvoiceEditorComponent implements OnInit {
       next: (res) => {
         this.isSaving.set(false);
         if (res.success) {
+          this.dialogService.toast('Draft invoice saved successfully.', 'success');
           this.invoiceSaved.emit();
         }
       },
       error: (err) => {
         this.isSaving.set(false);
-        alert(err.error?.message || 'Failed to save draft invoice.');
+        this.dialogService.alert('Save Failed', err.error?.message || 'Failed to save draft invoice.', 'danger');
       }
     });
   }
 
-  finalizeAndIssue(): void {
-    if (!this.validateForm()) return;
+  async finalizeAndIssue(): Promise<void> {
+    if (!(await this.validateForm())) return;
 
-    if (!confirm('Statutory Warning: Finalizing will permanently allocate a consecutive invoice number (Rule 46) and create an immutable record. Proceed?')) {
+    const confirmed = await this.dialogService.confirm(
+      'Finalize Invoice',
+      'Statutory Notice: Finalizing will permanently allocate a consecutive invoice number (Rule 46) and create an immutable record. Proceed?',
+      'Finalize & Issue',
+      false,
+      'warning'
+    );
+    if (!confirmed) {
       return;
     }
 
@@ -806,52 +816,56 @@ export class InvoiceEditorComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.salesService.finalizeDocument(res.data.id).subscribe({
-            next: (finRes) => {
+            next: async (finRes) => {
               this.isSaving.set(false);
               if (finRes.success) {
-                alert(`Invoice successfully finalized! Statutory Number: ${finRes.data.documentNumber}`);
+                await this.dialogService.alert(
+                  'Invoice Issued',
+                  `Invoice successfully finalized and issued! Statutory Number: ${finRes.data.documentNumber}`,
+                  'success'
+                );
                 this.invoiceSaved.emit();
               }
             },
             error: (finErr) => {
               this.isSaving.set(false);
-              alert(finErr.error?.message || 'Failed to finalize invoice.');
+              this.dialogService.alert('Finalization Failed', finErr.error?.message || 'Failed to finalize invoice.', 'danger');
             }
           });
         }
       },
       error: (err) => {
         this.isSaving.set(false);
-        alert(err.error?.message || 'Failed to save draft before finalization.');
+        this.dialogService.alert('Save Failed', err.error?.message || 'Failed to save draft before finalization.', 'danger');
       }
     });
   }
 
-  private validateForm(): boolean {
+  private async validateForm(): Promise<boolean> {
     if (!this.form.customerName.trim()) {
-      alert('Please enter or select a customer name.');
+      await this.dialogService.alert('Missing Customer', 'Please enter or select a customer name.', 'warning');
       return false;
     }
     if (!this.form.placeOfSupplyStateCode) {
-      alert('Place of Supply state code is mandatory for GST calculation.');
+      await this.dialogService.alert('Missing Place of Supply', 'Place of Supply state code is mandatory for GST calculation.', 'warning');
       return false;
     }
     if (this.items.length === 0) {
-      alert('An invoice must contain at least one line item.');
+      await this.dialogService.alert('No Items', 'An invoice must contain at least one line item.', 'warning');
       return false;
     }
     for (let i = 0; i < this.items.length; i++) {
       const itm = this.items[i];
       if (!itm.itemName.trim()) {
-        alert(`Line ${i + 1}: Item description cannot be empty.`);
+        await this.dialogService.alert('Missing Description', `Line ${i + 1}: Item description cannot be empty.`, 'warning');
         return false;
       }
       if (itm.quantity <= 0) {
-        alert(`Line ${i + 1}: Quantity must be greater than zero.`);
+        await this.dialogService.alert('Invalid Quantity', `Line ${i + 1}: Quantity must be greater than zero.`, 'warning');
         return false;
       }
       if (itm.unitPrice < 0) {
-        alert(`Line ${i + 1}: Unit price cannot be negative.`);
+        await this.dialogService.alert('Invalid Unit Price', `Line ${i + 1}: Unit price cannot be negative.`, 'warning');
         return false;
       }
     }

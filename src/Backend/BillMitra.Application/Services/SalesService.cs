@@ -452,6 +452,7 @@ public class SalesService : ISalesService
             TotalTax: doc.TotalTax,
             RoundOffAmount: doc.RoundOffAmount,
             GrandTotal: doc.GrandTotal,
+            PaidAmount: doc.PaidAmount,
             TotalAmountInWords: doc.TotalAmountInWords,
             Notes: doc.Notes,
             TermsAndConditions: doc.TermsAndConditions,

@@ -44,7 +44,7 @@ export class BmSelectDirective implements OnInit {
   }
 }
 
-export type BadgeVariant = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
+export type BadgeVariant = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary' | 'secondary';
 
 @Directive({
   selector: '[bmBadge]',

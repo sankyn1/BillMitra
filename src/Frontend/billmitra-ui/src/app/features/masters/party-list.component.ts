@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MastersService, PartyDto, CreateOrUpdatePartyRequest } from '../../core/services/masters.service';
 import { INDIAN_STATES } from '../../core/services/setup.service';
+import { DialogService } from '../../shared/services/dialog.service';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -276,6 +277,7 @@ import {
 })
 export class PartyListComponent implements OnInit {
   protected readonly mastersService = inject(MastersService);
+  protected readonly dialogService = inject(DialogService);
 
   public states = INDIAN_STATES;
   public searchQuery = '';
@@ -378,9 +380,17 @@ export class PartyListComponent implements OnInit {
     }
   }
 
-  deleteParty(id: string): void {
-    if (confirm('Are you sure you want to mark this party as inactive?')) {
-      this.mastersService.deleteParty(id).subscribe();
+  async deleteParty(id: string): Promise<void> {
+    const confirmed = await this.dialogService.confirm(
+      'Deactivate Party',
+      'Are you sure you want to mark this customer/supplier as inactive?',
+      'Deactivate',
+      true
+    );
+    if (confirmed) {
+      this.mastersService.deleteParty(id).subscribe({
+        next: () => this.dialogService.toast('Party marked as inactive.', 'info')
+      });
     }
   }
 

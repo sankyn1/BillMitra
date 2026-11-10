@@ -61,3 +61,15 @@ public interface IDocumentSequenceRepository
     Task<DocumentSequence> GetOrCreateSequenceAsync(Guid financialYearId, BillMitra.Domain.Enums.DocumentType documentType, CancellationToken cancellationToken = default);
     Task<string> AllocateNextNumberAsync(Guid financialYearId, BillMitra.Domain.Enums.DocumentType documentType, CancellationToken cancellationToken = default);
 }
+
+public interface IPaymentRepository
+{
+    Task<Payment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Payment>> GetAllAsync(int? paymentType = null, int? status = null, Guid? partyId = null, DateTime? fromDate = null, DateTime? toDate = null, CancellationToken cancellationToken = default);
+    Task<Payment> InsertPaymentWithAllocationsAsync(Payment payment, CancellationToken cancellationToken = default);
+    Task<bool> ReversePaymentAsync(Guid paymentId, string reason, string? reversedBy, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<PaymentAllocation>> GetAllocationsByPaymentIdAsync(Guid paymentId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<PaymentAllocation>> GetAllocationsBySalesDocumentIdAsync(Guid salesDocumentId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SalesDocument>> GetOpenInvoicesForPartyAsync(Guid partyId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LedgerEntry>> GetPartyLedgerAsync(Guid partyId, DateTime? fromDate = null, DateTime? toDate = null, CancellationToken cancellationToken = default);
+}

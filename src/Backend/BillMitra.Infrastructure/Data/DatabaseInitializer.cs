@@ -243,6 +243,7 @@ CREATE TABLE sales_documents (
     total_tax DECIMAL(18,2) NOT NULL DEFAULT 0,
     round_off_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
     grand_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
     total_amount_in_words NVARCHAR(500) NOT NULL,
     notes NVARCHAR(MAX) NULL,
     terms_and_conditions NVARCHAR(MAX) NULL,
@@ -279,6 +280,50 @@ CREATE TABLE sales_document_items (
     cess_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
     total_amount DECIMAL(18,2) NOT NULL
 );
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='payments' AND xtype='U')
+CREATE TABLE payments (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    payment_number NVARCHAR(50) NOT NULL UNIQUE,
+    party_id UNIQUEIDENTIFIER NOT NULL,
+    party_name NVARCHAR(200) NOT NULL,
+    payment_type INT NOT NULL,
+    payment_mode INT NOT NULL,
+    payment_date DATE NOT NULL,
+    amount DECIMAL(18,2) NOT NULL,
+    allocated_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    reference_number NVARCHAR(100) NULL,
+    bank_name NVARCHAR(100) NULL,
+    cheque_date DATE NULL,
+    notes NVARCHAR(MAX) NULL,
+    status INT NOT NULL DEFAULT 1,
+    created_at_utc DATETIME2 NOT NULL,
+    created_by NVARCHAR(100) NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='payment_allocations' AND xtype='U')
+CREATE TABLE payment_allocations (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    payment_id UNIQUEIDENTIFIER NOT NULL,
+    sales_document_id UNIQUEIDENTIFIER NOT NULL,
+    allocated_amount DECIMAL(18,2) NOT NULL,
+    allocation_date DATE NOT NULL,
+    notes NVARCHAR(255) NULL,
+    created_at_utc DATETIME2 NOT NULL
+);
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='payment_reversals' AND xtype='U')
+CREATE TABLE payment_reversals (
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    payment_id UNIQUEIDENTIFIER NOT NULL,
+    reversal_date DATETIME2 NOT NULL,
+    reason NVARCHAR(500) NOT NULL,
+    reversed_by NVARCHAR(100) NULL,
+    created_at_utc DATETIME2 NOT NULL
+);
+
+IF NOT EXISTS (SELECT * FROM syscolumns WHERE id=OBJECT_ID('sales_documents') AND name='paid_amount')
+ALTER TABLE sales_documents ADD paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0;
 ";
         await conn.ExecuteAsync(sql);
     }
@@ -443,6 +488,7 @@ CREATE TABLE IF NOT EXISTS sales_documents (
     total_tax NUMERIC NOT NULL DEFAULT 0,
     round_off_amount NUMERIC NOT NULL DEFAULT 0,
     grand_total NUMERIC NOT NULL DEFAULT 0,
+    paid_amount NUMERIC NOT NULL DEFAULT 0,
     total_amount_in_words TEXT NOT NULL,
     notes TEXT NULL,
     terms_and_conditions TEXT NULL,
@@ -478,8 +524,55 @@ CREATE TABLE IF NOT EXISTS sales_document_items (
     cess_amount NUMERIC NOT NULL DEFAULT 0,
     total_amount NUMERIC NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS payments (
+    id TEXT PRIMARY KEY,
+    payment_number TEXT NOT NULL UNIQUE,
+    party_id TEXT NOT NULL,
+    party_name TEXT NOT NULL,
+    payment_type INTEGER NOT NULL,
+    payment_mode INTEGER NOT NULL,
+    payment_date TEXT NOT NULL,
+    amount NUMERIC NOT NULL,
+    allocated_amount NUMERIC NOT NULL DEFAULT 0,
+    reference_number TEXT NULL,
+    bank_name TEXT NULL,
+    cheque_date TEXT NULL,
+    notes TEXT NULL,
+    status INTEGER NOT NULL DEFAULT 1,
+    created_at_utc TEXT NOT NULL,
+    created_by TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS payment_allocations (
+    id TEXT PRIMARY KEY,
+    payment_id TEXT NOT NULL,
+    sales_document_id TEXT NOT NULL,
+    allocated_amount NUMERIC NOT NULL,
+    allocation_date TEXT NOT NULL,
+    notes TEXT NULL,
+    created_at_utc TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS payment_reversals (
+    id TEXT PRIMARY KEY,
+    payment_id TEXT NOT NULL,
+    reversal_date TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    reversed_by TEXT NULL,
+    created_at_utc TEXT NOT NULL
+);
 ";
         await conn.ExecuteAsync(sql);
+
+        try
+        {
+            await conn.ExecuteAsync("ALTER TABLE sales_documents ADD COLUMN paid_amount NUMERIC NOT NULL DEFAULT 0;");
+        }
+        catch
+        {
+            // Column already exists
+        }
     }
 
     private static async Task CreatePostgreSqlTablesAsync(IDbConnection conn)
@@ -642,6 +735,7 @@ CREATE TABLE IF NOT EXISTS sales_documents (
     total_tax DECIMAL(18,2) NOT NULL DEFAULT 0,
     round_off_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
     grand_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
     total_amount_in_words VARCHAR(500) NOT NULL,
     notes TEXT NULL,
     terms_and_conditions TEXT NULL,
@@ -677,7 +771,54 @@ CREATE TABLE IF NOT EXISTS sales_document_items (
     cess_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
     total_amount DECIMAL(18,2) NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS payments (
+    id UUID PRIMARY KEY,
+    payment_number VARCHAR(50) NOT NULL UNIQUE,
+    party_id UUID NOT NULL,
+    party_name VARCHAR(200) NOT NULL,
+    payment_type INT NOT NULL,
+    payment_mode INT NOT NULL,
+    payment_date DATE NOT NULL,
+    amount DECIMAL(18,2) NOT NULL,
+    allocated_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    reference_number VARCHAR(100) NULL,
+    bank_name VARCHAR(100) NULL,
+    cheque_date DATE NULL,
+    notes TEXT NULL,
+    status INT NOT NULL DEFAULT 1,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_by VARCHAR(100) NULL
+);
+
+CREATE TABLE IF NOT EXISTS payment_allocations (
+    id UUID PRIMARY KEY,
+    payment_id UUID NOT NULL,
+    sales_document_id UUID NOT NULL,
+    allocated_amount DECIMAL(18,2) NOT NULL,
+    allocation_date DATE NOT NULL,
+    notes VARCHAR(255) NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS payment_reversals (
+    id UUID PRIMARY KEY,
+    payment_id UUID NOT NULL,
+    reversal_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    reason VARCHAR(500) NOT NULL,
+    reversed_by VARCHAR(100) NULL,
+    created_at_utc TIMESTAMP WITH TIME ZONE NOT NULL
+);
 ";
         await conn.ExecuteAsync(sql);
+
+        try
+        {
+            await conn.ExecuteAsync("ALTER TABLE sales_documents ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(18,2) NOT NULL DEFAULT 0;");
+        }
+        catch
+        {
+            // Column already exists
+        }
     }
 }

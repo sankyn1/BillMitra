@@ -51,6 +51,7 @@ SELECT
     total_tax as TotalTax,
     round_off_amount as RoundOffAmount,
     grand_total as GrandTotal,
+    paid_amount as PaidAmount,
     total_amount_in_words as TotalAmountInWords,
     notes as Notes,
     terms_and_conditions as TermsAndConditions,
@@ -139,6 +140,7 @@ SELECT
     total_tax as TotalTax,
     round_off_amount as RoundOffAmount,
     grand_total as GrandTotal,
+    paid_amount as PaidAmount,
     total_amount_in_words as TotalAmountInWords,
     notes as Notes,
     terms_and_conditions as TermsAndConditions,
@@ -208,7 +210,7 @@ INSERT INTO sales_documents (
     customer_gstin, billing_address, shipping_address, place_of_supply_state_code,
     supplier_state_code, is_reverse_charge, supply_type, currency_code,
     sub_total_taxable, cgst_total, sgst_total, igst_total, cess_total,
-    total_tax, round_off_amount, grand_total, total_amount_in_words,
+    total_tax, round_off_amount, grand_total, paid_amount, total_amount_in_words,
     notes, terms_and_conditions, idempotency_key, created_at_utc,
     finalized_at_utc, cancelled_at_utc, cancellation_reason, created_by
 ) VALUES (
@@ -217,7 +219,7 @@ INSERT INTO sales_documents (
     @CustomerGstin, @BillingAddress, @ShippingAddress, @PlaceOfSupplyStateCode,
     @SupplierStateCode, @IsReverseCharge, @SupplyType, @CurrencyCode,
     @SubTotalTaxable, @CgstTotal, @SgstTotal, @IgstTotal, @CessTotal,
-    @TotalTax, @RoundOffAmount, @GrandTotal, @TotalAmountInWords,
+    @TotalTax, @RoundOffAmount, @GrandTotal, @PaidAmount, @TotalAmountInWords,
     @Notes, @TermsAndConditions, @IdempotencyKey, @CreatedAtUtc,
     @FinalizedAtUtc, @CancelledAtUtc, @CancellationReason, @CreatedBy
 );";
@@ -250,6 +252,7 @@ INSERT INTO sales_documents (
             doc.TotalTax,
             doc.RoundOffAmount,
             doc.GrandTotal,
+            doc.PaidAmount,
             doc.TotalAmountInWords,
             doc.Notes,
             doc.TermsAndConditions,
@@ -316,6 +319,7 @@ UPDATE sales_documents SET
     total_tax = @TotalTax,
     round_off_amount = @RoundOffAmount,
     grand_total = @GrandTotal,
+    paid_amount = @PaidAmount,
     total_amount_in_words = @TotalAmountInWords,
     notes = @Notes,
     terms_and_conditions = @TermsAndConditions,
@@ -351,6 +355,7 @@ WHERE id = @Id;";
             doc.TotalTax,
             doc.RoundOffAmount,
             doc.GrandTotal,
+            doc.PaidAmount,
             doc.TotalAmountInWords,
             doc.Notes,
             doc.TermsAndConditions,
@@ -396,3 +401,4 @@ INSERT INTO sales_document_items (
         return await GetByIdAsync(id.Value, cancellationToken);
     }
 }
+

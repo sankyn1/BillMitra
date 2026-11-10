@@ -8,6 +8,11 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
   standalone: true
 })
 export class BmButtonDirective implements OnInit {
+  @Input('bmButton') set variantAlias(v: ButtonVariant | string) {
+    if (v && v !== '') {
+      this.bmVariant = v as ButtonVariant;
+    }
+  }
   @Input() bmVariant: ButtonVariant = 'primary';
   @Input() bmSize: ButtonSize = 'md';
   @Input() bmBlock = false;

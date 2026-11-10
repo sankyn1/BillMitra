@@ -18,7 +18,9 @@ public enum DocumentStatus
 {
     Draft = 1,
     Finalized = 2,
-    Cancelled = 3
+    PartiallyPaid = 3,
+    Paid = 4,
+    Cancelled = 5
 }
 
 public enum GstSupplyType
@@ -76,6 +78,7 @@ public sealed record SalesDocumentDto(
     decimal TotalTax,
     decimal RoundOffAmount,
     decimal GrandTotal,
+    decimal PaidAmount,
     string TotalAmountInWords,
     string? Notes,
     string? TermsAndConditions,
@@ -153,9 +156,10 @@ public sealed record CalculatedItemResponse(
 );
 
 public sealed record FinalizeDocumentRequest(
-    string? IdempotencyKey
+    string? IdempotencyKey = null
 );
 
 public sealed record CancelDocumentRequest(
     string CancellationReason
 );
+

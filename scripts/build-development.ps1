@@ -3,7 +3,7 @@
 
 param(
     [string]$Configuration = "Release",
-    [string]$SemanticVersion = "0.2.0-beta.1"
+    [string]$SemanticVersion = "0.5.0-beta.1"
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,8 +20,11 @@ Write-Host " Target Directory: $ArtifactsDir" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # 0. Clean & Prepare Artifacts Directory
+Write-Host "`n[0/6] Stopping existing development instances and preparing artifacts directory..." -ForegroundColor Yellow
+Stop-Process -Name "BillMitra", "BillMitra.Api" -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 800
+
 if (Test-Path $ArtifactsDir) {
-    Write-Host "`n[0/6] Cleaning existing artifacts directory..." -ForegroundColor Yellow
     Remove-Item -Path $ArtifactsDir -Recurse -Force
 }
 New-Item -ItemType Directory -Path $ArtifactsDir -Force | Out-Null
@@ -84,7 +87,7 @@ $VersionMetadata = @{
     BuildDateUtc = [DateTime]::UtcNow.ToString("o")
     TargetOs = "Windows 10/11 x64"
     SchemaVersion = "1.0.0"
-    Milestone = "MVP-1 Setup & Persistence"
+    Milestone = "MVP-4 Payments, Receipts, Multi-Invoice Allocation & Ledgers"
 } | ConvertTo-Json -Depth 4
 
 Set-Content -Path (Join-Path $ArtifactsDir "version.json") -Value $VersionMetadata
@@ -94,29 +97,33 @@ Write-Host "`n[6/6] Generating README-TESTING.md..." -ForegroundColor Yellow
 $ReadmePath = Join-Path $ArtifactsDir "README-TESTING.md"
 
 $ReadmeContent = @'
-# BillMitra - Development Testing Package (MVP-1)
+# BillMitra - Development Testing Package (MVP-4)
 
 - Target Environment: Windows 10/11 x64
+- Milestone: MVP-4 (Payments, Multi-Invoice Allocation, Ledgers & Aging)
 
 ## What This Package Delivers
 - Native Desktop Executable: BillMitra.exe (WPF + WebView2 container).
 - First-Run Setup Wizard: Complete company onboarding, Indian GST validation, PAN extraction, and 36 GST state codes.
-- Local Database Persistence: Dapper runtime repositories storing company profile, accounting financial years, and admin credentials in local SQLEXPRESS / SQLite fallback.
-- Supervised Backend API: Hosted under Backend/ (ASP.NET Core .NET 10 Kestrel).
-- Integrated Frontend UI: Hosted under Frontend/ (Angular 22 + PrimeNG + Centralized Directives).
-- Automatic Child Process Supervision: Launching BillMitra.exe starts the backend API on http://127.0.0.1:5000, verifies health, and renders the application inside the native window.
-
-## Prerequisites
-1. .NET 10 Runtime (Windows x64)
-2. Microsoft Edge WebView2 Runtime
-3. Local SQL Server (SQLEXPRESS) or PostgreSQL (Automated fallback to SQLite is active if neither is running)
+- Item Master & Party Master: Products, services, HSN/SAC codes, tax rates, customers, and suppliers.
+- Central GST Calculation & Sales Documents (MVP-3): Intra-state (CGST+SGST), Inter-state (IGST), RCM, discounts, Section 170 round-off, 16-character Rule 46 numbering, QuestPDF generation (A4, A5, 80mm thermal receipt).
+- Payments, Receipts & Multi-Invoice Settle (MVP-4):
+  - Inward Customer Receipts & Outward Supplier Payments.
+  - Multi-invoice FIFO auto-allocation & partial payment tracking.
+  - Advance balance (unallocated amount) tracking.
+  - Customer & Supplier transaction ledgers with chronological running balance.
+  - Overdue aging bucket analysis (0-30, 31-60, 61-90, 90+ days).
+  - Transactional payment reversal with audit reason logging and automated invoice balance recovery.
+- Centralized Professional Dialog System: No browser alert/confirm calls; polished modal cards and auto-dismissing toasts.
+- Uniform UI Design System: Consistent dropdown styling with SVG chevrons, tokenized colors, focus rings, and matched heights.
+- Automatic Process Supervision: Launching BillMitra.exe starts the backend API on http://127.0.0.1:5000, checks health, and renders inside the native window.
 
 ## How to Test This Build
 1. Navigate to artifacts\development\
 2. Double-click BillMitra.exe
-3. If uninitialized, the 4-step BillMitra Business Setup Wizard will be displayed.
-4. Fill in business details (e.g. Legal Name, State, GSTIN, and Admin password).
-5. Click 'Complete Setup & Open BillMitra' to initialize your database and unlock the live Executive Control Center.
+3. Navigate to "Payments & Receipts" in the sidebar.
+4. Click "+ Record Customer Receipt" to record a payment, select a customer, view their open invoices, and allocate payments or leave as advance.
+5. Open "Party Ledgers & Aging" to inspect chronological running balance statements and overdue aging buckets.
 '@
 
 Set-Content -Path $ReadmePath -Value $ReadmeContent -Encoding UTF8
