@@ -1,0 +1,4 @@
+Antigravity Billing Software Blueprint
+Documentation package: Final v2
+Updated: 2026-11-10
+Includes: continuous Windows development executable from MVP-0; refreshed package after every MVP; final customer installer after release acceptance.

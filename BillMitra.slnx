@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Backend/">
+    <Project Path="src/Backend/BillMitra.Api/BillMitra.Api.csproj" />
+    <Project Path="src/Backend/BillMitra.Application/BillMitra.Application.csproj" />
+    <Project Path="src/Backend/BillMitra.Domain/BillMitra.Domain.csproj" />
+    <Project Path="src/Backend/BillMitra.Infrastructure/BillMitra.Infrastructure.csproj" />
+    <Project Path="src/Backend/BillMitra.Worker/BillMitra.Worker.csproj" />
+  </Folder>
+  <Folder Name="/src/Desktop/">
+    <Project Path="src/Desktop/BillMitra.Desktop/BillMitra.Desktop.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/BillMitra.Contracts/BillMitra.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BillMitra.ApiTests/BillMitra.ApiTests.csproj" />
+    <Project Path="tests/BillMitra.ArchitectureTests/BillMitra.ArchitectureTests.csproj" />
+    <Project Path="tests/BillMitra.IntegrationTests/BillMitra.IntegrationTests.csproj" />
+    <Project Path="tests/BillMitra.UnitTests/BillMitra.UnitTests.csproj" />
+  </Folder>
+</Solution>
