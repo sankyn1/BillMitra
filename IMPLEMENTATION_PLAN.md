@@ -13,7 +13,7 @@ To fulfill all requirements, the solution will be structured cleanly under `d:\m
 
 ```text
 BillMitra/
-├── Antigravity_Billing_Blueprint/    # Original specification blueprints
+├── docs/                             # Original specification blueprints and architecture docs
 ├── artifacts/                         # Generated executable builds and packages
 │   └── development/                   # Daily / MVP runnable testing builds
 │       ├── BillMitra.exe              # Desktop Shell executable

@@ -1,15 +1,14 @@
-# Billing Software -- Antigravity Documentation Pack
+# BillMitra – Architecture, Statutory & Engineering Documentation
 
-Version: 1.0\
-Product: Windows GST Billing & Business Management Software\
-Audience: Antigravity coding agent, developers, QA and product owner.
+**Version:** 1.0  
+**Product:** Windows GST Billing, Inventory & Business Management Platform  
+**Audience:** Architects, Developers, QA, Tax Auditors, and Contributors  
 
-## Purpose
+---
 
-This documentation defines the product scope, architecture, MVP
-sequence, non-breaking-change rules, invoice numbering policy, user
-experience standards, data model principles, integration boundaries,
-testing requirements and release gates.
+## Overview
+
+This directory (`/docs`) defines the core product scope, Clean Architecture guidelines, statutory GST compliance rules, database schemas, document numbering lifecycle, UI/UX design standards, and testing policies for BillMitra.
 
 ## Read first
 
