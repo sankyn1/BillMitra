@@ -17,3 +17,4 @@ public interface IBackupService
     Task<BackupConfigurationDto> UpdateConfigurationAsync(UpdateBackupConfigurationRequest request, CancellationToken cancellationToken = default);
     Task ExecuteStartupAutoBackupIfNeededAsync(CancellationToken cancellationToken = default);
 }
+

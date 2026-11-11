@@ -82,3 +82,4 @@ public record ComprehensiveReportsBundleDto(
     List<PartyAgingDetailDto> TopOverdueParties,
     List<ProductMovementVelocityDto> ProductVelocities
 );
+

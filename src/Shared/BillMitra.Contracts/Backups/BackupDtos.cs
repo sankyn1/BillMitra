@@ -43,3 +43,4 @@ public record UpdateBackupConfigurationRequest(
     string? BackupFolderPath,
     int RetentionCount
 );
+

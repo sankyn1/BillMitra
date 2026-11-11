@@ -14,3 +14,4 @@ public interface IReportService
     Task<IReadOnlyList<AgingBucketDto>> GetAgingBucketsAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductMovementVelocityDto>> GetProductVelocitiesAsync(DateTime? fromDate = null, DateTime? toDate = null, CancellationToken cancellationToken = default);
 }
+

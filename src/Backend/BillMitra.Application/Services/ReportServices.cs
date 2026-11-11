@@ -87,3 +87,4 @@ public class ReportService : IReportService
         return await _reportRepository.GetProductMovementVelocitiesAsync(companyId, start, end, cancellationToken);
     }
 }
+

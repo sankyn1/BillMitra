@@ -117,3 +117,4 @@ public class ReportUnitTests
         bundle.MonthlyTrends.Should().HaveCount(2);
     }
 }
+

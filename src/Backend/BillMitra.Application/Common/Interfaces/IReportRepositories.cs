@@ -15,3 +15,4 @@ public interface IReportRepository
     Task<IReadOnlyList<PartyAgingDetailDto>> GetTopOverduePartiesAsync(Guid companyId, int topN = 10, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductMovementVelocityDto>> GetProductMovementVelocitiesAsync(Guid companyId, DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default);
 }
+
