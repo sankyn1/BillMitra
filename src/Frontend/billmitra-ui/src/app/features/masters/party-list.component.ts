@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { MastersService, PartyDto, CreateOrUpdatePartyRequest } from '../../core/services/masters.service';
 import { INDIAN_STATES } from '../../core/services/setup.service';
 import { DialogService } from '../../shared/services/dialog.service';
-import { BmPaginationComponent } from '../../shared/components';
+import { BmPaginationComponent, BmGridToolbarComponent } from '../../shared/components';
+import { GridColumnDef } from '../../shared/models';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -26,6 +27,7 @@ import {
     CommonModule,
     FormsModule,
     BmPaginationComponent,
+    BmGridToolbarComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -56,24 +58,25 @@ import {
         </div>
       </div>
 
-      <!-- Search & Filters Toolbar -->
-      <div bmPanel bmElevation="sm" class="toolbar-panel mb-3">
-        <div class="toolbar-grid">
-          <div class="search-wrap">
-            <input bmInput type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange($event)" placeholder="Search by Party Name, GSTIN, Phone, or City..." />
-          </div>
-          <div class="filter-wrap">
-            <select bmInput [(ngModel)]="selectedType" (ngModelChange)="loadParties()">
-              <option [ngValue]="null">All Parties</option>
-              <option [ngValue]="1">Customers Only</option>
-              <option [ngValue]="2">Suppliers Only</option>
-            </select>
-          </div>
-          <div class="filter-count">
-            <span bmBadge="info">{{ mastersService.parties().length }} Records</span>
-          </div>
+      <!-- Search, Export & Column Customization Toolbar -->
+      <bm-grid-toolbar
+        gridId="parties"
+        [columns]="partyColumns"
+        [data]="mastersService.parties()"
+        title="Parties_Directory"
+        [totalCount]="mastersService.parties().length"
+        itemName="Parties"
+        searchPlaceholder="Search by Party Name, GSTIN, Phone, or City..."
+        [(searchTerm)]="searchQuery"
+        (searchTermChange)="onSearchChange($event)">
+        <div toolbar-actions class="filter-wrap">
+          <select bmInput [(ngModel)]="selectedType" (ngModelChange)="loadParties()">
+            <option [ngValue]="null">All Parties</option>
+            <option [ngValue]="1">Customers Only</option>
+            <option [ngValue]="2">Suppliers Only</option>
+          </select>
         </div>
-      </div>
+      </bm-grid-toolbar>
 
       <!-- Main Parties Table -->
       <div bmPanel bmElevation="sm">
@@ -81,20 +84,20 @@ import {
           <table bmTable [bmStriped]="true" [bmHover]="true">
             <thead>
               <tr>
-                <th bmTableHeaderCell>Party Name / Trade Name</th>
-                <th bmTableHeaderCell>Category</th>
-                <th bmTableHeaderCell>GSTIN / PAN</th>
-                <th bmTableHeaderCell>State of Supply</th>
-                <th bmTableHeaderCell>Contact & City</th>
-                <th bmTableHeaderCell bmAlign="right">Credit Limit</th>
-                <th bmTableHeaderCell bmAlign="right">Ledger Balance</th>
-                <th bmTableHeaderCell bmAlign="center">Actions</th>
+                <th bmTableHeaderCell *ngIf="isColVisible('name')">Party Name / Trade Name</th>
+                <th bmTableHeaderCell *ngIf="isColVisible('partyType')">Category</th>
+                <th bmTableHeaderCell *ngIf="isColVisible('gstin')">GSTIN / PAN</th>
+                <th bmTableHeaderCell *ngIf="isColVisible('stateName')">State of Supply</th>
+                <th bmTableHeaderCell *ngIf="isColVisible('contact')">Contact & City</th>
+                <th bmTableHeaderCell bmAlign="right" *ngIf="isColVisible('creditLimit')">Credit Limit</th>
+                <th bmTableHeaderCell bmAlign="right" *ngIf="isColVisible('currentBalance')">Ledger Balance</th>
+                <th bmTableHeaderCell bmAlign="center" *ngIf="isColVisible('actions')">Actions</th>
               </tr>
             </thead>
             <tbody>
               @if (mastersService.parties().length === 0) {
                 <tr bmTableRow>
-                  <td bmTableCell colspan="8" class="text-center py-5">
+                  <td bmTableCell [attr.colspan]="visibleColsCount" class="text-center py-5">
                     <div class="empty-state">
                       <i class="pi pi-users empty-icon"></i>
                       <h4>No Customers or Suppliers Found</h4>
@@ -108,13 +111,13 @@ import {
               } @else {
                 @for (party of paginatedParties(); track party.id) {
                   <tr bmTableRow>
-                    <td bmTableCell>
+                    <td bmTableCell *ngIf="isColVisible('name')">
                       <strong>{{ party.name }}</strong>
                       @if (party.tradeName) {
                         <div class="text-muted text-sm">{{ party.tradeName }}</div>
                       }
                     </td>
-                    <td bmTableCell>
+                    <td bmTableCell *ngIf="isColVisible('partyType')">
                       @if (party.partyType === 1) {
                         <span bmBadge="info">Customer</span>
                       } @else if (party.partyType === 2) {
@@ -123,25 +126,25 @@ import {
                         <span bmBadge="neutral">Both</span>
                       }
                     </td>
-                    <td bmTableCell>
+                    <td bmTableCell *ngIf="isColVisible('gstin')">
                       @if (party.gstin) {
                         <code>{{ party.gstin }}</code>
                       } @else {
                         <span class="text-muted">Unregistered (B2C)</span>
                       }
                     </td>
-                    <td bmTableCell>{{ party.stateName }} ({{ party.stateCode }})</td>
-                    <td bmTableCell>
+                    <td bmTableCell *ngIf="isColVisible('stateName')">{{ party.stateName }} ({{ party.stateCode }})</td>
+                    <td bmTableCell *ngIf="isColVisible('contact')">
                       <div><i class="pi pi-phone text-muted mr-1"></i> {{ party.phone }}</div>
                       <small class="text-muted">{{ party.city }}</small>
                     </td>
-                    <td bmTableCell bmAlign="right">₹ {{ party.creditLimit | number:'1.2-2' }}</td>
-                    <td bmTableCell bmAlign="right">
+                    <td bmTableCell bmAlign="right" *ngIf="isColVisible('creditLimit')">₹ {{ party.creditLimit | number:'1.2-2' }}</td>
+                    <td bmTableCell bmAlign="right" *ngIf="isColVisible('currentBalance')">
                       <span [class.text-danger]="party.currentBalance > 0" [class.text-success]="party.currentBalance <= 0">
                         <strong>₹ {{ party.currentBalance | number:'1.2-2' }}</strong>
                       </span>
                     </td>
-                    <td bmTableCell bmAlign="center">
+                    <td bmTableCell bmAlign="center" *ngIf="isColVisible('actions')">
                       <div class="btn-group">
                         <button bmButton bmVariant="outline" bmSize="sm" (click)="editParty(party)" title="Edit Party">
                           <i class="pi pi-pencil"></i>
@@ -296,6 +299,26 @@ export class PartyListComponent implements OnInit {
 
   public currentPage = signal<number>(1);
   public pageSize = signal<number>(10);
+
+  public partyColumns: GridColumnDef[] = [
+    { key: 'name', header: 'Party Name / Trade Name', locked: true },
+    { key: 'partyType', header: 'Category', formatter: (p) => p.partyType === 1 ? 'Customer' : p.partyType === 2 ? 'Supplier' : 'Both' },
+    { key: 'gstin', header: 'GSTIN / PAN', formatter: (p) => p.gstin || 'Unregistered' },
+    { key: 'stateName', header: 'State of Supply', formatter: (p) => `${p.stateName} (${p.stateCode})` },
+    { key: 'contact', header: 'Contact & City', formatter: (p) => `${p.phone || ''} - ${p.city || ''}` },
+    { key: 'creditLimit', header: 'Credit Limit', align: 'right', formatter: (p) => `₹ ${p.creditLimit}` },
+    { key: 'currentBalance', header: 'Ledger Balance', align: 'right', formatter: (p) => `₹ ${p.currentBalance}` },
+    { key: 'actions', header: 'Actions', exportable: false, sortable: false, locked: true }
+  ];
+
+  public isColVisible(key: string): boolean {
+    const col = this.partyColumns.find(c => c.key === key);
+    return col ? col.visible !== false : true;
+  }
+
+  public get visibleColsCount(): number {
+    return this.partyColumns.filter(c => c.visible !== false).length;
+  }
 
   public paginatedParties = computed(() => {
     const parties = this.mastersService.parties();

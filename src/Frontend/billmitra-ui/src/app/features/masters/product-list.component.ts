@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MastersService, ProductDto, CreateOrUpdateProductRequest } from '../../core/services/masters.service';
 import { DialogService } from '../../shared/services/dialog.service';
-import { BmPaginationComponent } from '../../shared/components';
+import { BmPaginationComponent, BmGridToolbarComponent } from '../../shared/components';
+import { GridColumnDef } from '../../shared/models';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -25,6 +26,7 @@ import {
     CommonModule,
     FormsModule,
     BmPaginationComponent,
+    BmGridToolbarComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -55,25 +57,26 @@ import {
         </div>
       </div>
 
-      <!-- Search & Filters Toolbar -->
-      <div bmPanel bmElevation="sm" class="toolbar-panel mb-3">
-        <div class="toolbar-grid">
-          <div class="search-wrap">
-            <input bmInput type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange($event)" placeholder="Search by Item Code, Name, or HSN Code..." />
-          </div>
-          <div class="filter-wrap">
-            <select bmInput [(ngModel)]="selectedCategory" (ngModelChange)="loadProducts()">
-              <option value="">All Categories</option>
-              @for (cat of mastersService.categories(); track cat.id) {
-                <option [value]="cat.id">{{ cat.name }}</option>
-              }
-            </select>
-          </div>
-          <div class="filter-count">
-            <span bmBadge="info">{{ mastersService.products().length }} Items Active</span>
-          </div>
+      <!-- Search, Export & Column Customization Toolbar -->
+      <bm-grid-toolbar
+        gridId="products"
+        [columns]="productColumns"
+        [data]="mastersService.products()"
+        title="Products_Catalogue"
+        [totalCount]="mastersService.products().length"
+        itemName="Items"
+        searchPlaceholder="Search by Item Code, Name, or HSN Code..."
+        [(searchTerm)]="searchQuery"
+        (searchTermChange)="onSearchChange($event)">
+        <div toolbar-actions class="filter-wrap">
+          <select bmInput [(ngModel)]="selectedCategory" (ngModelChange)="loadProducts()">
+            <option value="">All Categories</option>
+            @for (cat of mastersService.categories(); track cat.id) {
+              <option [value]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
         </div>
-      </div>
+      </bm-grid-toolbar>
 
       <!-- Main Products Table -->
       <div bmPanel bmElevation="sm">
