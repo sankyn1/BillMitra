@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -10,6 +10,7 @@ import {
   GstReturnFilingDto
 } from '../../core/services/gst.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { BmPaginationComponent } from '../../shared/components';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -29,6 +30,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
+    BmPaginationComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -243,7 +245,7 @@ import {
                   @if (!gstr1Summary()?.b2bInvoices?.length) {
                     <tr><td colspan="10" class="empty-cell">No B2B invoices recorded in period {{ currentTaxPeriod }}.</td></tr>
                   } @else {
-                    @for (inv of gstr1Summary()?.b2bInvoices; track inv.invoiceNumber) {
+                    @for (inv of paginatedB2b(); track inv.invoiceNumber) {
                       <tr>
                         <td bmCell><span class="font-mono font-bold">{{ inv.customerGstin }}</span></td>
                         <td bmCell>{{ inv.customerName }}</td>
@@ -260,6 +262,13 @@ import {
                   }
                 </tbody>
               </table>
+              <bm-pagination
+                *ngIf="(gstr1Summary()?.b2bInvoices?.length || 0) > 0"
+                [totalItems]="gstr1Summary()?.b2bInvoices?.length || 0"
+                [(currentPage)]="b2bPage"
+                [(pageSize)]="b2bPageSize"
+                itemName="B2B invoices">
+              </bm-pagination>
             </div>
           </div>
 
@@ -468,7 +477,7 @@ import {
                 @if (hsnList().length === 0) {
                   <tr><td colspan="10" class="empty-cell">No HSN entries recorded in period {{ currentTaxPeriod }}.</td></tr>
                 } @else {
-                  @for (item of hsnList(); track item.hsnSacCode + item.gstRatePercent) {
+                  @for (item of paginatedHsn(); track item.hsnSacCode + item.gstRatePercent) {
                     <tr>
                       <td bmCell><strong class="font-mono text-primary">{{ item.hsnSacCode }}</strong></td>
                       <td bmCell>{{ item.description }}</td>
@@ -485,6 +494,13 @@ import {
                 }
               </tbody>
             </table>
+            <bm-pagination
+              *ngIf="hsnList().length > 0"
+              [totalItems]="hsnList().length"
+              [(currentPage)]="hsnPage"
+              [(pageSize)]="hsnPageSize"
+              itemName="HSN lines">
+            </bm-pagination>
           </div>
         </div>
       }
@@ -518,7 +534,7 @@ import {
                 @if (filingHistory().length === 0) {
                   <tr><td colspan="9" class="empty-cell">No historical GST return filings recorded.</td></tr>
                 } @else {
-                  @for (f of filingHistory(); track f.id) {
+                  @for (f of paginatedFilings(); track f.id) {
                     <tr>
                       <td bmCell><strong>{{ f.returnType === 1 ? 'GSTR-1' : 'GSTR-3B' }}</strong></td>
                       <td bmCell><span class="font-mono">{{ f.taxPeriod }}</span></td>
@@ -550,6 +566,13 @@ import {
                 }
               </tbody>
             </table>
+            <bm-pagination
+              *ngIf="filingHistory().length > 0"
+              [totalItems]="filingHistory().length"
+              [(currentPage)]="filingPage"
+              [(pageSize)]="filingPageSize"
+              itemName="filings">
+            </bm-pagination>
           </div>
         </div>
       }
@@ -871,6 +894,30 @@ export class GstReturnsComponent implements OnInit {
   isLoading = signal<boolean>(false);
   isSubmitting = signal<boolean>(false);
 
+  b2bPage = signal<number>(1);
+  b2bPageSize = signal<number>(10);
+  paginatedB2b = computed(() => {
+    const list = this.gstr1Summary()?.b2bInvoices || [];
+    const start = (this.b2bPage() - 1) * this.b2bPageSize();
+    return list.slice(start, start + this.b2bPageSize());
+  });
+
+  hsnPage = signal<number>(1);
+  hsnPageSize = signal<number>(10);
+  paginatedHsn = computed(() => {
+    const list = this.hsnList();
+    const start = (this.hsnPage() - 1) * this.hsnPageSize();
+    return list.slice(start, start + this.hsnPageSize());
+  });
+
+  filingPage = signal<number>(1);
+  filingPageSize = signal<number>(10);
+  paginatedFilings = computed(() => {
+    const list = this.filingHistory();
+    const start = (this.filingPage() - 1) * this.filingPageSize();
+    return list.slice(start, start + this.filingPageSize());
+  });
+
   get currentTaxPeriod(): string {
     return `${this.selectedMonth}${this.selectedYear}`;
   }
@@ -885,6 +932,9 @@ export class GstReturnsComponent implements OnInit {
   }
 
   onPeriodChange(): void {
+    this.b2bPage.set(1);
+    this.hsnPage.set(1);
+    this.filingPage.set(1);
     this.loadAllData();
   }
 

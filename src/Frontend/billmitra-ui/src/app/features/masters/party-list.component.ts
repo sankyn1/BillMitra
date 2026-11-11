@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MastersService, PartyDto, CreateOrUpdatePartyRequest } from '../../core/services/masters.service';
 import { INDIAN_STATES } from '../../core/services/setup.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { BmPaginationComponent } from '../../shared/components';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -24,6 +25,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
+    BmPaginationComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -104,7 +106,7 @@ import {
                   </td>
                 </tr>
               } @else {
-                @for (party of mastersService.parties(); track party.id) {
+                @for (party of paginatedParties(); track party.id) {
                   <tr bmTableRow>
                     <td bmTableCell>
                       <strong>{{ party.name }}</strong>
@@ -155,6 +157,12 @@ import {
             </tbody>
           </table>
         </div>
+        <bm-pagination
+          [totalItems]="mastersService.parties().length"
+          [(currentPage)]="currentPage"
+          [(pageSize)]="pageSize"
+          itemName="parties">
+        </bm-pagination>
       </div>
 
       <!-- Add/Edit Modal Dialog -->
@@ -286,6 +294,15 @@ export class PartyListComponent implements OnInit {
   public editingId = signal<string | null>(null);
   public modalError = signal<string | null>(null);
 
+  public currentPage = signal<number>(1);
+  public pageSize = signal<number>(10);
+
+  public paginatedParties = computed(() => {
+    const parties = this.mastersService.parties();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return parties.slice(start, start + this.pageSize());
+  });
+
   public form: CreateOrUpdatePartyRequest = this.getEmptyForm();
 
   ngOnInit(): void {
@@ -293,11 +310,13 @@ export class PartyListComponent implements OnInit {
   }
 
   loadParties(): void {
+    this.currentPage.set(1);
     this.mastersService.loadParties(this.selectedType ?? undefined, this.searchQuery).subscribe();
   }
 
   onSearchChange(val: string): void {
     this.searchQuery = val;
+    this.currentPage.set(1);
     this.loadParties();
   }
 

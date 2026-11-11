@@ -7,11 +7,12 @@ import {
   CreateExpenseRequest
 } from '../../core/services/purchase-expense.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { BmPaginationComponent } from '../../shared/components';
 
 @Component({
   selector: 'app-expense-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BmPaginationComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -93,7 +94,7 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr *ngFor="let exp of filteredExpenses()" class="hover:bg-slate-50/75">
+              <tr *ngFor="let exp of paginatedExpenses()" class="hover:bg-slate-50/75">
                 <td class="px-4 py-3 font-mono font-medium text-slate-900">{{ exp.voucherNumber }}</td>
                 <td class="px-4 py-3 text-slate-600">{{ exp.expenseDate | date:'mediumDate' }}</td>
                 <td class="px-4 py-3">
@@ -132,6 +133,12 @@ import { DialogService } from '../../shared/services/dialog.service';
             </tbody>
           </table>
         </div>
+        <bm-pagination
+          [totalItems]="filteredExpenses().length"
+          [(currentPage)]="currentPage"
+          [(pageSize)]="pageSize"
+          itemName="expenses">
+        </bm-pagination>
       </div>
 
       <!-- Record Expense Modal -->
@@ -269,6 +276,15 @@ export class ExpenseListComponent implements OnInit {
   categories = this.expenseService.categories;
   searchQuery = '';
   categoryFilter = '';
+
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+
+  paginatedExpenses = computed(() => {
+    const list = this.filteredExpenses();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(start, start + this.pageSize());
+  });
 
   isModalOpen = false;
   isCategoryModalOpen = false;

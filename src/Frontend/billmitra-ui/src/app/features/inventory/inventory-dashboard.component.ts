@@ -13,11 +13,12 @@ import {
   CreateWarehouseRequest
 } from '../../core/services/inventory.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { BmPaginationComponent } from '../../shared/components';
 
 @Component({
   selector: 'app-inventory-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BmPaginationComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -120,7 +121,7 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr *ngFor="let item of filteredStockSummaries()" class="hover:bg-slate-50/75">
+              <tr *ngFor="let item of paginatedStockSummaries()" class="hover:bg-slate-50/75">
                 <td class="px-4 py-3 font-medium text-slate-900">
                   {{ item.productName }}
                   <div class="text-xs text-slate-400 font-mono">{{ item.sku || 'No SKU' }}</div>
@@ -154,6 +155,12 @@ import { DialogService } from '../../shared/services/dialog.service';
             </tbody>
           </table>
         </div>
+        <bm-pagination
+          [totalItems]="filteredStockSummaries().length"
+          [(currentPage)]="stockPage"
+          [(pageSize)]="stockPageSize"
+          itemName="stock items">
+        </bm-pagination>
       </div>
 
       <!-- TAB 2: Batches & Expiry -->
@@ -174,7 +181,7 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr *ngFor="let b of batches()" class="hover:bg-slate-50/75">
+              <tr *ngFor="let b of paginatedBatches()" class="hover:bg-slate-50/75">
                 <td class="px-4 py-3 font-mono font-bold text-slate-900">{{ b.batchNumber }}</td>
                 <td class="px-4 py-3 font-medium text-slate-800">{{ b.productName }}</td>
                 <td class="px-4 py-3 text-slate-600">{{ b.warehouseName }}</td>
@@ -203,6 +210,12 @@ import { DialogService } from '../../shared/services/dialog.service';
             </tbody>
           </table>
         </div>
+        <bm-pagination
+          [totalItems]="batches().length"
+          [(currentPage)]="batchPage"
+          [(pageSize)]="batchPageSize"
+          itemName="batches">
+        </bm-pagination>
       </div>
 
       <!-- TAB 3: Movement Ledger -->
@@ -222,7 +235,7 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr *ngFor="let m of movements()" class="hover:bg-slate-50/75">
+              <tr *ngFor="let m of paginatedMovements()" class="hover:bg-slate-50/75">
                 <td class="px-4 py-3 text-slate-600">{{ m.movementDate | date:'short' }}</td>
                 <td class="px-4 py-3 font-medium text-slate-900">{{ m.productName }}</td>
                 <td class="px-4 py-3 text-slate-600">{{ m.warehouseName }}</td>
@@ -250,6 +263,12 @@ import { DialogService } from '../../shared/services/dialog.service';
             </tbody>
           </table>
         </div>
+        <bm-pagination
+          [totalItems]="movements().length"
+          [(currentPage)]="movementPage"
+          [(pageSize)]="movementPageSize"
+          itemName="movement records">
+        </bm-pagination>
       </div>
 
       <!-- TAB 4: Warehouses -->
@@ -523,6 +542,33 @@ export class InventoryDashboardComponent implements OnInit {
 
   stockSearchQuery = '';
   onlyLowStockFilter = false;
+
+  stockPage = signal(1);
+  stockPageSize = signal(10);
+
+  batchPage = signal(1);
+  batchPageSize = signal(10);
+
+  movementPage = signal(1);
+  movementPageSize = signal(10);
+
+  paginatedStockSummaries = computed(() => {
+    const list = this.filteredStockSummaries();
+    const start = (this.stockPage() - 1) * this.stockPageSize();
+    return list.slice(start, start + this.stockPageSize());
+  });
+
+  paginatedBatches = computed(() => {
+    const list = this.batches();
+    const start = (this.batchPage() - 1) * this.batchPageSize();
+    return list.slice(start, start + this.batchPageSize());
+  });
+
+  paginatedMovements = computed(() => {
+    const list = this.movements();
+    const start = (this.movementPage() - 1) * this.movementPageSize();
+    return list.slice(start, start + this.movementPageSize());
+  });
 
   isAdjustmentModalOpen = false;
   isTransferModalOpen = false;

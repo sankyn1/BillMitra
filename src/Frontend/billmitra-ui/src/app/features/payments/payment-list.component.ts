@@ -1,9 +1,10 @@
-import { Component, EventEmitter, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PaymentService, PaymentDto } from '../../core/services/payment.service';
 import { DialogService } from '../../shared/services/dialog.service';
 import { PaymentModalComponent } from './payment-modal.component';
+import { BmPaginationComponent } from '../../shared/components';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -26,6 +27,7 @@ import {
     CommonModule,
     FormsModule,
     PaymentModalComponent,
+    BmPaginationComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelBodyDirective,
@@ -153,7 +155,7 @@ import {
                   </tr>
                 </thead>
                 <tbody>
-                  @for (p of filteredPayments(); track p.id) {
+                  @for (p of paginatedPayments(); track p.id) {
                     <tr bmTableRow>
                       <td bmTableCell>{{ p.paymentDate | date: 'dd-MMM-yyyy' }}</td>
                       <td bmTableCell><strong>{{ p.paymentNumber }}</strong></td>
@@ -211,6 +213,12 @@ import {
             </div>
           }
         </div>
+        <bm-pagination
+          [totalItems]="filteredPayments().length"
+          [(currentPage)]="currentPage"
+          [(pageSize)]="pageSize"
+          itemName="vouchers">
+        </bm-pagination>
       </div>
 
       <!-- Record Modal -->
@@ -369,16 +377,27 @@ export class PaymentListComponent implements OnInit {
   public showCreateModal: boolean = false;
   public modalType: number = 1; // 1 = Receipt, 2 = Payment
 
+  public currentPage = signal<number>(1);
+  public pageSize = signal<number>(10);
+
+  public paginatedPayments = computed(() => {
+    const list = this.filteredPayments();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(start, start + this.pageSize());
+  });
+
   ngOnInit(): void {
     this.refresh();
   }
 
   refresh(): void {
+    this.currentPage.set(1);
     this.paymentService.loadPayments().subscribe();
   }
 
   setTab(tab: 'all' | 'receipts' | 'payments' | 'reversed'): void {
     this.selectedTab = tab;
+    this.currentPage.set(1);
   }
 
   openCreateModal(type: number): void {

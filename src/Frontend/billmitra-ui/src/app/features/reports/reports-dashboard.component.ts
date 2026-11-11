@@ -12,11 +12,12 @@ import {
   ProductMovementVelocity
 } from '../../core/services/report.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { BmPaginationComponent } from '../../shared/components';
 
 @Component({
   selector: 'app-reports-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BmPaginationComponent],
   template: `
     <div class="space-y-6">
       <!-- Header with Filters & Print -->
@@ -266,7 +267,7 @@ import { DialogService } from '../../shared/services/dialog.service';
             <h2 class="text-lg font-bold text-slate-800 mb-1">Top Overdue Accounts</h2>
             <p class="text-xs text-slate-500 mb-4">Highest pending balances with aging breakdown</p>
 
-            <div class="overflow-y-auto max-h-64">
+            <div class="overflow-y-auto max-h-72">
               <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 text-slate-600 font-bold sticky top-0">
                   <tr>
@@ -278,7 +279,7 @@ import { DialogService } from '../../shared/services/dialog.service';
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
-                  <tr *ngFor="let p of bundle.topOverdueParties" class="hover:bg-slate-50 transition">
+                  <tr *ngFor="let p of paginatedOverdueParties" class="hover:bg-slate-50 transition">
                     <td class="py-2 px-3">
                       <div class="font-bold text-slate-800">{{ p.partyName }}</div>
                       <div class="text-[10px] text-slate-400 font-mono">{{ p.gstin || 'Unregistered' }}</div>
@@ -294,6 +295,14 @@ import { DialogService } from '../../shared/services/dialog.service';
                 </tbody>
               </table>
             </div>
+            <bm-pagination
+              *ngIf="bundle.topOverdueParties.length > 0"
+              [totalItems]="bundle.topOverdueParties.length"
+              [(currentPage)]="overduePage"
+              [(pageSize)]="overduePageSize"
+              [pageSizeOptions]="[5, 10, 20]"
+              itemName="parties">
+            </bm-pagination>
           </div>
         </div>
 
@@ -319,7 +328,7 @@ import { DialogService } from '../../shared/services/dialog.service';
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 text-slate-700">
-                <tr *ngFor="let item of bundle.productVelocities" class="hover:bg-slate-50 transition">
+                <tr *ngFor="let item of paginatedProductVelocities" class="hover:bg-slate-50 transition">
                   <td class="py-3 px-4">
                     <div class="font-bold text-slate-800">{{ item.productName }}</div>
                     <div class="text-[11px] text-slate-400 font-mono">{{ item.sku || 'No SKU' }}</div>
@@ -345,6 +354,13 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tbody>
             </table>
           </div>
+          <bm-pagination
+            *ngIf="bundle.productVelocities.length > 0"
+            [totalItems]="bundle.productVelocities.length"
+            [(currentPage)]="velocityPage"
+            [(pageSize)]="velocityPageSize"
+            itemName="products">
+          </bm-pagination>
         </div>
       </div>
     </div>
@@ -360,6 +376,24 @@ export class ReportsDashboardComponent implements OnInit {
 
   fromDate: string = '';
   toDate: string = '';
+
+  overduePage = 1;
+  overduePageSize = 5;
+
+  velocityPage = 1;
+  velocityPageSize = 10;
+
+  get paginatedOverdueParties(): PartyAgingDetail[] {
+    if (!this.bundle) return [];
+    const start = (this.overduePage - 1) * this.overduePageSize;
+    return this.bundle.topOverdueParties.slice(start, start + this.overduePageSize);
+  }
+
+  get paginatedProductVelocities(): ProductMovementVelocity[] {
+    if (!this.bundle) return [];
+    const start = (this.velocityPage - 1) * this.velocityPageSize;
+    return this.bundle.productVelocities.slice(start, start + this.velocityPageSize);
+  }
 
   ngOnInit() {
     this.applyQuickFilter('thisMonth');
@@ -395,6 +429,8 @@ export class ReportsDashboardComponent implements OnInit {
   }
 
   loadReports() {
+    this.overduePage = 1;
+    this.velocityPage = 1;
     this.isLoading = true;
     this.reportService.getComprehensiveReports(this.fromDate, this.toDate).subscribe({
       next: (data) => {

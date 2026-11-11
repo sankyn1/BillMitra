@@ -1,9 +1,10 @@
-import { Component, OnInit, output, signal } from '@angular/core';
+import { Component, OnInit, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SalesService, SalesDocumentDto, DocumentType, DocumentStatus } from '../../core/services/sales.service';
 import { DialogService } from '../../shared/services/dialog.service';
 import { DocumentPreviewDialogComponent } from './document-preview-dialog.component';
+import { BmPaginationComponent } from '../../shared/components';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -24,6 +25,7 @@ import {
     CommonModule,
     FormsModule,
     DocumentPreviewDialogComponent,
+    BmPaginationComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -124,7 +126,7 @@ import {
                   </td>
                 </tr>
               } @else {
-                @for (doc of salesService.documents(); track doc.id) {
+                @for (doc of paginatedDocuments(); track doc.id) {
                   <tr>
                     <td bmCell>
                       <strong class="bm-doc-number">{{ doc.documentNumber || doc.draftNumber }}</strong>
@@ -224,6 +226,12 @@ import {
             </tbody>
           </table>
         </div>
+        <bm-pagination
+          [totalItems]="salesService.documents().length"
+          [(currentPage)]="currentPage"
+          [(pageSize)]="pageSize"
+          itemName="invoices">
+        </bm-pagination>
       </div>
 
       <!-- Cancel Confirmation Modal -->
@@ -434,6 +442,15 @@ export class InvoiceListComponent implements OnInit {
   selectedType: number | null = null;
   selectedStatus: number | null = null;
 
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+
+  paginatedDocuments = computed(() => {
+    const docs = this.salesService.documents();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return docs.slice(start, start + this.pageSize());
+  });
+
   showCancelModal = signal(false);
   cancelTarget = signal<SalesDocumentDto | null>(null);
   cancelReason = '';
@@ -488,6 +505,7 @@ export class InvoiceListComponent implements OnInit {
   }
 
   loadDocuments(): void {
+    this.currentPage.set(1);
     this.salesService.loadDocuments(
       this.selectedType ?? undefined,
       this.selectedStatus ?? undefined,

@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PaymentService, LedgerEntryDto, PartyAgingDto } from '../../core/services/payment.service';
 import { MastersService, PartyDto } from '../../core/services/masters.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { BmPaginationComponent } from '../../shared/components';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -25,6 +26,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
+    BmPaginationComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -157,7 +159,7 @@ import {
                   </tr>
                 </thead>
                 <tbody>
-                  @for (e of entries(); track $index) {
+                  @for (e of paginatedEntries(); track $index) {
                     <tr bmTableRow>
                       <td bmTableCell>{{ e.date | date: 'dd-MMM-yyyy' }}</td>
                       <td bmTableCell>
@@ -189,6 +191,12 @@ import {
             </div>
           }
         </div>
+        <bm-pagination
+          [totalItems]="entries().length"
+          [(currentPage)]="currentPage"
+          [(pageSize)]="pageSize"
+          itemName="statement entries">
+        </bm-pagination>
       </div>
     </div>
   `,
@@ -301,6 +309,15 @@ export class PartyLedgerComponent implements OnInit {
   public fromDate: string = '';
   public toDate: string = '';
 
+  public currentPage = signal<number>(1);
+  public pageSize = signal<number>(10);
+
+  public paginatedEntries = computed(() => {
+    const list = this.entries();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(start, start + this.pageSize());
+  });
+
   protected readonly Math = Math;
 
   ngOnInit(): void {
@@ -322,6 +339,7 @@ export class PartyLedgerComponent implements OnInit {
   }
 
   loadLedgerAndAging(): void {
+    this.currentPage.set(1);
     if (!this.selectedPartyId) {
       this.entries.set([]);
       this.aging.set(null);

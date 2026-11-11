@@ -8,11 +8,12 @@ import {
   PurchaseDocumentItemInput
 } from '../../core/services/purchase-expense.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { BmPaginationComponent } from '../../shared/components';
 
 @Component({
   selector: 'app-purchase-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BmPaginationComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -95,7 +96,7 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr *ngFor="let doc of filteredPurchases()" class="hover:bg-slate-50/75">
+              <tr *ngFor="let doc of paginatedPurchases()" class="hover:bg-slate-50/75">
                 <td class="px-4 py-3 font-medium text-slate-900">
                   {{ doc.supplierInvoiceNumber }}
                   <div class="text-xs text-slate-400">Created: {{ doc.createdAtUtc | date:'shortDate' }}</div>
@@ -146,6 +147,12 @@ import { DialogService } from '../../shared/services/dialog.service';
             </tbody>
           </table>
         </div>
+        <bm-pagination
+          [totalItems]="filteredPurchases().length"
+          [(currentPage)]="currentPage"
+          [(pageSize)]="pageSize"
+          itemName="inward bills">
+        </bm-pagination>
       </div>
 
       <!-- Record Purchase Modal -->
@@ -265,6 +272,15 @@ export class PurchaseListComponent implements OnInit {
   statusFilter = '';
   isModalOpen = false;
 
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+
+  paginatedPurchases = computed(() => {
+    const list = this.filteredPurchases();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(start, start + this.pageSize());
+  });
+
   newPurchase: CreateOrUpdatePurchaseRequest = {
     documentType: 1,
     supplierName: '',
@@ -317,7 +333,7 @@ export class PurchaseListComponent implements OnInit {
   });
 
   applyFilters() {
-    // computed handles reactivity
+    this.currentPage.set(1);
   }
 
   openCreateModal() {

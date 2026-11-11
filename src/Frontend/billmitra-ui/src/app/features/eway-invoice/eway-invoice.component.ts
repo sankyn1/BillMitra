@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { EWayInvoiceService, EWayBillDto, EInvoiceDto } from '../../core/services/eway-invoice.service';
 import { SalesService, SalesDocumentDto } from '../../core/services/sales.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { BmPaginationComponent } from '../../shared/components';
 
 @Component({
   selector: 'app-eway-invoice',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BmPaginationComponent],
   template: `
     <div class="eway-container">
       <!-- Header -->
@@ -94,7 +95,7 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let b of ewayService.ewayBills()">
+              <tr *ngFor="let b of paginatedEwb">
                 <td class="font-mono font-bold">{{ b.ewayBillNumber }}</td>
                 <td class="font-mono">{{ b.docNumber }}</td>
                 <td>
@@ -125,6 +126,13 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </tbody>
           </table>
+          <bm-pagination
+            *ngIf="ewayService.ewayBills().length > 0"
+            [totalItems]="ewayService.ewayBills().length"
+            [(currentPage)]="ewbPage"
+            [(pageSize)]="ewbPageSize"
+            itemName="e-way bills">
+          </bm-pagination>
           <ng-template #emptyEwb>
             <div class="empty-state">
               <i class="pi pi-truck" style="font-size: 3rem; color: #94a3b8;"></i>
@@ -149,7 +157,7 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let inv of ewayService.einvoices()">
+              <tr *ngFor="let inv of paginatedEinv">
                 <td class="font-mono font-bold">{{ inv.ackNo }}</td>
                 <td>{{ inv.ackDate | date:'dd-MMM-yyyy HH:mm' }}</td>
                 <td class="font-mono">Document {{ inv.salesDocumentId | slice:0:8 }}</td>
@@ -174,6 +182,13 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </tbody>
           </table>
+          <bm-pagination
+            *ngIf="ewayService.einvoices().length > 0"
+            [totalItems]="ewayService.einvoices().length"
+            [(currentPage)]="einvPage"
+            [(pageSize)]="einvPageSize"
+            itemName="e-invoices">
+          </bm-pagination>
           <ng-template #emptyEinv>
             <div class="empty-state">
               <i class="pi pi-qrcode" style="font-size: 3rem; color: #94a3b8;"></i>
@@ -199,7 +214,7 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let doc of finalizedInvoices">
+              <tr *ngFor="let doc of paginatedEligibleInvoices">
                 <td class="font-mono font-bold">{{ doc.documentNumber || doc.draftNumber }}</td>
                 <td>{{ doc.documentDate | date:'dd-MMM-yyyy' }}</td>
                 <td class="fw-600">{{ doc.customerName }}</td>
@@ -216,10 +231,10 @@ import { DialogService } from '../../shared/services/dialog.service';
                 </td>
                 <td>
                   <div class="action-btn-group">
-                    <button class="btn btn-sm btn-outline" (click)="openGenerateEwbModal(doc)">
+                    <button class="btn-sm btn-outline" (click)="openGenerateEwbModal(doc)">
                       <i class="pi pi-truck"></i> E-Way Bill
                     </button>
-                    <button class="btn btn-sm btn-primary" *ngIf="doc.customerGstin" (click)="generateEInvoiceDirect(doc)">
+                    <button class="btn-sm btn-primary" *ngIf="doc.customerGstin" (click)="generateEInvoiceDirect(doc)">
                       <i class="pi pi-qrcode"></i> Generate IRN
                     </button>
                   </div>
@@ -227,6 +242,13 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </tbody>
           </table>
+          <bm-pagination
+            *ngIf="finalizedInvoices.length > 0"
+            [totalItems]="finalizedInvoices.length"
+            [(currentPage)]="eligiblePage"
+            [(pageSize)]="eligiblePageSize"
+            itemName="eligible invoices">
+          </bm-pagination>
         </div>
       </div>
     </div>
@@ -395,6 +417,27 @@ export class EWayInvoiceComponent implements OnInit {
 
   activeTab: 'eway' | 'einvoice' | 'generate' = 'eway';
   finalizedInvoices: SalesDocumentDto[] = [];
+
+  ewbPage = 1;
+  ewbPageSize = 10;
+  get paginatedEwb() {
+    const start = (this.ewbPage - 1) * this.ewbPageSize;
+    return this.ewayService.ewayBills().slice(start, start + this.ewbPageSize);
+  }
+
+  einvPage = 1;
+  einvPageSize = 10;
+  get paginatedEinv() {
+    const start = (this.einvPage - 1) * this.einvPageSize;
+    return this.ewayService.einvoices().slice(start, start + this.einvPageSize);
+  }
+
+  eligiblePage = 1;
+  eligiblePageSize = 10;
+  get paginatedEligibleInvoices() {
+    const start = (this.eligiblePage - 1) * this.eligiblePageSize;
+    return this.finalizedInvoices.slice(start, start + this.eligiblePageSize);
+  }
 
   showGenerateEwbModal = false;
   selectedInvoice: SalesDocumentDto | null = null;

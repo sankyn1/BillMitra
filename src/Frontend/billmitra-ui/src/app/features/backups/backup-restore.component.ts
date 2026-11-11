@@ -7,11 +7,12 @@ import {
   BackupConfiguration
 } from '../../core/services/backup.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { BmPaginationComponent } from '../../shared/components';
 
 @Component({
   selector: 'app-backup-restore',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BmPaginationComponent],
   template: `
     <div class="space-y-6">
       <!-- Header & Quick Actions -->
@@ -91,7 +92,7 @@ import { DialogService } from '../../shared/services/dialog.service';
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 text-slate-700">
-              <tr *ngFor="let b of backups" class="hover:bg-slate-50 transition">
+              <tr *ngFor="let b of paginatedBackups" class="hover:bg-slate-50 transition">
                 <td class="py-3 px-4">
                   <div class="font-bold text-slate-800 flex items-center gap-1.5">
                     <span>{{ getBackupTypeIcon(b.backupType) }}</span>
@@ -136,6 +137,12 @@ import { DialogService } from '../../shared/services/dialog.service';
             </tbody>
           </table>
         </div>
+        <bm-pagination
+          [totalItems]="backups.length"
+          [(currentPage)]="currentPage"
+          [(pageSize)]="pageSize"
+          itemName="snapshots">
+        </bm-pagination>
       </div>
 
       <!-- Automated Retention & Schedule Policy Configuration -->
@@ -235,6 +242,14 @@ export class BackupRestoreComponent implements OnInit {
   backups: BackupRecord[] = [];
   config: BackupConfiguration | null = null;
   isActionBusy = false;
+
+  currentPage = 1;
+  pageSize = 10;
+
+  get paginatedBackups(): BackupRecord[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.backups.slice(start, start + this.pageSize);
+  }
 
   showManualModal = false;
   manualNotes = '';

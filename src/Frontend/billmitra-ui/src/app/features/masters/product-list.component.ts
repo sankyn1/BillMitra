@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MastersService, ProductDto, CreateOrUpdateProductRequest } from '../../core/services/masters.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { BmPaginationComponent } from '../../shared/components';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -23,6 +24,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
+    BmPaginationComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -105,7 +107,7 @@ import {
                   </td>
                 </tr>
               } @else {
-                @for (item of mastersService.products(); track item.id) {
+                @for (item of paginatedProducts(); track item.id) {
                   <tr bmTableRow>
                     <td bmTableCell><strong>{{ item.itemCode }}</strong></td>
                     <td bmTableCell>
@@ -142,6 +144,12 @@ import {
             </tbody>
           </table>
         </div>
+        <bm-pagination
+          [totalItems]="mastersService.products().length"
+          [(currentPage)]="currentPage"
+          [(pageSize)]="pageSize"
+          itemName="products">
+        </bm-pagination>
       </div>
 
       <!-- Add/Edit Modal Dialog -->
@@ -299,6 +307,15 @@ export class ProductListComponent implements OnInit {
   public editingId = signal<string | null>(null);
   public modalError = signal<string | null>(null);
 
+  public currentPage = signal<number>(1);
+  public pageSize = signal<number>(10);
+
+  public paginatedProducts = computed(() => {
+    const items = this.mastersService.products();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return items.slice(start, start + this.pageSize());
+  });
+
   public form: CreateOrUpdateProductRequest = this.getEmptyForm();
 
   ngOnInit(): void {
@@ -308,11 +325,13 @@ export class ProductListComponent implements OnInit {
   }
 
   loadProducts(): void {
+    this.currentPage.set(1);
     this.mastersService.loadProducts(this.searchQuery, this.selectedCategory).subscribe();
   }
 
   onSearchChange(val: string): void {
     this.searchQuery = val;
+    this.currentPage.set(1);
     this.loadProducts();
   }
 
