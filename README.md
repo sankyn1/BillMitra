@@ -46,6 +46,11 @@ It runs **100% locally on your Windows PC**. You do **not** need an active inter
 | :--- | :--- |
 | **Create a GST Tax Invoice** | Pick customer & items; GST (CGST/SGST or IGST) is calculated automatically based on state codes and HSN tax slabs (0%, 5%, 12%, 18%, 28%). |
 | **Convert Quotation to Invoice** | Send a Quotation or Proforma Invoice. When approved, click **Convert to Invoice**; a final Tax Invoice is generated instantly with reference audit links. |
+| **E-Way Bill & E-Invoice Integration** | 1-click official government JSON export for E-Way Bill (EWB) and E-Invoice (IRN/QR code generation) with NIC sandbox & live APIs. |
+| **Purchases & Operating Expenses** | Log vendor inward purchase bills, verify Input Tax Credit (ITC) eligibility, and record direct/indirect company expenses with cash outflow tracking. |
+| **Multi-Godown Inventory & Batches** | Track stock across multiple warehouses/godowns, manage batch/lot numbers with expiry dates, execute inter-warehouse transfers and physical reconciliation. |
+| **Executive Reports & Debt Aging** | View real-time gross/net profit metrics, 6-month financial performance trends, 0-90+ days receivable/payable aging matrix, and fast/slow product velocities. |
+| **Automated Backups & Disaster Recovery** | Automated background database snapshots (SQLite VACUUM / WAL checkpoints) on startup, SHA256 checksums, retention policies, and safe point-in-time database restore. |
 | **Print POS Thermal Receipts** | Click **Direct Print** to send an 80mm formatted thermal slip straight to your thermal printer (Epson, TVS, NGX, Posiflex) in milliseconds. |
 | **Print on Pre-Printed Letterhead** | Enable "Pre-Printed Stationery Mode". BillMitra suppresses the top company details and leaves a configurable blank top margin (e.g., 50mm) for your pre-printed stationery. |
 | **File Monthly GSTR-1** | Go to GST Returns, choose the month, and click **Download Portal JSON**. Upload the generated `GSTR1_{GSTIN}_{Period}.json` directly to the GST Common Portal. |
@@ -103,6 +108,22 @@ Click **Print / Preview** on any finalized invoice to open the interactive print
    * **Table 13**: Summary of all invoice numbers issued and cancelled
 4. Click **Download Portal JSON** to get the official offline JSON file.
 5. Log in to [gst.gov.in](https://www.gst.gov.in) $\rightarrow$ Returns Dashboard $\rightarrow$ Upload the JSON file.
+
+### Step 8: Multi-Warehouse Inventory & Batch Tracking
+1. Go to **Inventory & Godowns** $\rightarrow$ **Warehouse Locations** to manage branch and storage locations.
+2. Under **Batch & Expiry Register**, register manufacturer lot numbers and expiry dates to avoid stock obsolescence.
+3. Use **Physical Reconciliation** to adjust variance between physical stock count and system ledger in 1 click.
+4. Execute **Inter-Warehouse Stock Transfers** with automatic audit logs.
+
+### Step 9: Inward Purchases & Expenses
+1. Go to **Inward Purchases** $\rightarrow$ **New Inward Purchase Bill** to register supplier bills and eligible Input Tax Credit (ITC).
+2. Go to **Expenses & Cash** to log day-to-day office expenses (rent, electricity, transport, stationery) with GST categorization.
+
+### Step 10: Automated Backups & Safe Restore
+1. Go to **Backup & Restore** in the left menu.
+2. Click **Create Instant Backup** anytime to take a complete point-in-time snapshot with SHA256 integrity verification.
+3. Enable **Auto-Backup on Application Startup** so BillMitra automatically backs up your business every 24 hours.
+4. Use **Restore Database** to recover previous snapshots safely with automatic pre-restore safety snapshots.
 
 ---
 
