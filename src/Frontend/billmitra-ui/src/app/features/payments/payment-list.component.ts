@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { PaymentService, PaymentDto } from '../../core/services/payment.service';
 import { DialogService } from '../../shared/services/dialog.service';
 import { PaymentModalComponent } from './payment-modal.component';
-import { BmPaginationComponent } from '../../shared/components';
+import { BmPaginationComponent, BmGridToolbarComponent } from '../../shared/components';
+import { GridColumnDef } from '../../shared/models';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -28,10 +29,10 @@ import {
     FormsModule,
     PaymentModalComponent,
     BmPaginationComponent,
+    BmGridToolbarComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelBodyDirective,
-    BmInputDirective,
     BmTableDirective,
     BmTableHeaderCellDirective,
     BmTableRowDirective,
@@ -92,11 +93,20 @@ import {
         </div>
       </div>
 
-      <!-- Filter Bar -->
-      <div class="bm-filter-bar">
-        <div class="bm-tabs">
+      <!-- Search, Export & Column Customization Toolbar -->
+      <bm-grid-toolbar
+        gridId="payment_receipt_register"
+        [columns]="paymentColumns"
+        [data]="paymentService.payments()"
+        title="Payment_Receipt_Register"
+        [totalCount]="filteredPayments().length"
+        itemName="Vouchers"
+        searchPlaceholder="Search by Voucher #, Party, Reference..."
+        [(searchTerm)]="searchQuery"
+        (searchTermChange)="currentPage.set(1)">
+        <div toolbar-actions class="bm-tabs">
           <button class="bm-tab-btn" [class.active]="selectedTab === 'all'" (click)="setTab('all')">
-            All Vouchers ({{ paymentService.payments().length }})
+            All ({{ paymentService.payments().length }})
           </button>
           <button class="bm-tab-btn" [class.active]="selectedTab === 'receipts'" (click)="setTab('receipts')">
             Receipts ({{ countReceipts() }})
@@ -108,18 +118,7 @@ import {
             Reversed ({{ countReversed() }})
           </button>
         </div>
-
-        <div class="bm-search-wrap">
-          <i class="pi pi-search bm-search-icon"></i>
-          <input
-            bmInput
-            type="text"
-            placeholder="Search by Voucher #, Party, Reference..."
-            [(ngModel)]="searchQuery"
-            class="bm-search-input"
-          />
-        </div>
-      </div>
+      </bm-grid-toolbar>
 
       <!-- Data Table Panel -->
       <div bmPanel>
@@ -141,57 +140,57 @@ import {
               <table bmTable class="bm-payments-table">
                 <thead>
                   <tr>
-                    <th bmHeaderCell>Date</th>
-                    <th bmHeaderCell>Voucher #</th>
-                    <th bmHeaderCell>Party Name</th>
-                    <th bmHeaderCell>Type</th>
-                    <th bmHeaderCell>Mode</th>
-                    <th bmHeaderCell>Reference / Bank</th>
-                    <th bmHeaderCell class="text-right">Amount (₹)</th>
-                    <th bmHeaderCell class="text-right">Allocated (₹)</th>
-                    <th bmHeaderCell class="text-right">Advance (₹)</th>
-                    <th bmHeaderCell>Status</th>
-                    <th bmHeaderCell class="text-center" style="width: 110px;">Actions</th>
+                    <th bmHeaderCell *ngIf="isColVisible('paymentDate')">Date</th>
+                    <th bmHeaderCell *ngIf="isColVisible('voucherNumber')">Voucher #</th>
+                    <th bmHeaderCell *ngIf="isColVisible('partyName')">Party Name</th>
+                    <th bmHeaderCell *ngIf="isColVisible('voucherType')">Type</th>
+                    <th bmHeaderCell *ngIf="isColVisible('paymentMode')">Mode</th>
+                    <th bmHeaderCell *ngIf="isColVisible('referenceNumber')">Reference / Bank</th>
+                    <th bmHeaderCell class="text-right" *ngIf="isColVisible('amount')">Amount (₹)</th>
+                    <th bmHeaderCell class="text-right" *ngIf="isColVisible('allocatedAmount')">Allocated (₹)</th>
+                    <th bmHeaderCell class="text-right" *ngIf="isColVisible('unallocatedAmount')">Advance (₹)</th>
+                    <th bmHeaderCell *ngIf="isColVisible('isReversed')">Status</th>
+                    <th bmHeaderCell class="text-center" style="width: 110px;" *ngIf="isColVisible('actions')">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (p of paginatedPayments(); track p.id) {
                     <tr bmTableRow>
-                      <td bmTableCell>{{ p.paymentDate | date: 'dd-MMM-yyyy' }}</td>
-                      <td bmTableCell><strong>{{ p.paymentNumber }}</strong></td>
-                      <td bmTableCell>
+                      <td bmTableCell *ngIf="isColVisible('paymentDate')">{{ p.paymentDate | date: 'dd-MMM-yyyy' }}</td>
+                      <td bmTableCell *ngIf="isColVisible('voucherNumber')"><strong>{{ p.paymentNumber }}</strong></td>
+                      <td bmTableCell *ngIf="isColVisible('partyName')">
                         <div class="font-semibold">{{ p.partyName }}</div>
                         @if (p.partyGstin) {
                           <div class="text-xs text-muted">{{ p.partyGstin }}</div>
                         }
                       </td>
-                      <td bmTableCell>
+                      <td bmTableCell *ngIf="isColVisible('voucherType')">
                         <span [bmBadge]="p.paymentType === 1 ? 'success' : 'warning'">
                           {{ p.paymentType === 1 ? 'Receipt' : 'Payment' }}
                         </span>
                       </td>
-                      <td bmTableCell>{{ getModeLabel(p.paymentMode) }}</td>
-                      <td bmTableCell>
+                      <td bmTableCell *ngIf="isColVisible('paymentMode')">{{ getModeLabel(p.paymentMode) }}</td>
+                      <td bmTableCell *ngIf="isColVisible('referenceNumber')">
                         <div>{{ p.referenceNumber || '-' }}</div>
                         @if (p.bankName) {
                           <div class="text-xs text-muted">{{ p.bankName }}</div>
                         }
                       </td>
-                      <td bmTableCell class="text-right font-mono font-bold">
+                      <td bmTableCell class="text-right font-mono font-bold" *ngIf="isColVisible('amount')">
                         ₹{{ p.amount | number: '1.2-2' }}
                       </td>
-                      <td bmTableCell class="text-right font-mono text-muted">
+                      <td bmTableCell class="text-right font-mono text-muted" *ngIf="isColVisible('allocatedAmount')">
                         ₹{{ p.allocatedAmount | number: '1.2-2' }}
                       </td>
-                      <td bmTableCell class="text-right font-mono font-semibold" [ngClass]="p.unallocatedAmount > 0 ? 'text-success' : 'text-muted'">
+                      <td bmTableCell class="text-right font-mono font-semibold" [ngClass]="p.unallocatedAmount > 0 ? 'text-success' : 'text-muted'" *ngIf="isColVisible('unallocatedAmount')">
                         ₹{{ p.unallocatedAmount | number: '1.2-2' }}
                       </td>
-                      <td bmTableCell>
+                      <td bmTableCell *ngIf="isColVisible('isReversed')">
                         <span [bmBadge]="p.status === 1 ? 'success' : 'danger'">
                           {{ p.status === 1 ? 'Active' : 'Reversed' }}
                         </span>
                       </td>
-                      <td bmTableCell class="text-center">
+                      <td bmTableCell class="text-center" *ngIf="isColVisible('actions')">
                         <div class="bm-actions-group">
                           @if (p.status === 1) {
                             <button
@@ -379,6 +378,29 @@ export class PaymentListComponent implements OnInit {
 
   public currentPage = signal<number>(1);
   public pageSize = signal<number>(10);
+
+  public paymentColumns: GridColumnDef[] = [
+    { key: 'paymentDate', header: 'Date', formatter: (p) => new Date(p.paymentDate).toLocaleDateString() },
+    { key: 'voucherNumber', header: 'Voucher #', locked: true, formatter: (p) => p.paymentNumber },
+    { key: 'partyName', header: 'Party Name', locked: true, formatter: (p) => `${p.partyName}${p.partyGstin ? ' (' + p.partyGstin + ')' : ''}` },
+    { key: 'voucherType', header: 'Type', formatter: (p) => p.paymentType === 1 ? 'Receipt' : 'Payment' },
+    { key: 'paymentMode', header: 'Mode', formatter: (p) => this.getModeLabel(p.paymentMode) },
+    { key: 'referenceNumber', header: 'Reference / Bank', formatter: (p) => `${p.referenceNumber || '-'}${p.bankName ? ' (' + p.bankName + ')' : ''}` },
+    { key: 'amount', header: 'Amount (₹)', align: 'right', formatter: (p) => `₹ ${p.amount}` },
+    { key: 'allocatedAmount', header: 'Allocated (₹)', align: 'right', formatter: (p) => `₹ ${p.allocatedAmount}` },
+    { key: 'unallocatedAmount', header: 'Advance (₹)', align: 'right', formatter: (p) => `₹ ${p.unallocatedAmount}` },
+    { key: 'isReversed', header: 'Status', align: 'center', formatter: (p) => p.status === 1 ? 'Active' : 'Reversed' },
+    { key: 'actions', header: 'Actions', exportable: false, sortable: false, locked: true }
+  ];
+
+  public isColVisible(key: string): boolean {
+    const col = this.paymentColumns.find(c => c.key === key);
+    return col ? col.visible !== false : true;
+  }
+
+  public get visibleColsCount(): number {
+    return this.paymentColumns.filter(c => c.visible !== false).length;
+  }
 
   public paginatedPayments = computed(() => {
     const list = this.filteredPayments();

@@ -17,6 +17,7 @@ public class EWayBillService : IEWayBillService
     private readonly ISalesDocumentRepository _salesRepository;
     private readonly ICompanyRepository _companyRepository;
     private readonly IEWayBillProvider _provider;
+    private readonly IPdfGeneratorService _pdfGenerator;
     private readonly ILogger<EWayBillService> _logger;
 
     public EWayBillService(
@@ -24,12 +25,14 @@ public class EWayBillService : IEWayBillService
         ISalesDocumentRepository salesRepository,
         ICompanyRepository companyRepository,
         IEWayBillProvider provider,
+        IPdfGeneratorService pdfGenerator,
         ILogger<EWayBillService> logger)
     {
         _ewayBillRepository = ewayBillRepository;
         _salesRepository = salesRepository;
         _companyRepository = companyRepository;
         _provider = provider;
+        _pdfGenerator = pdfGenerator;
         _logger = logger;
     }
 
@@ -144,6 +147,12 @@ public class EWayBillService : IEWayBillService
         return ToDto(record);
     }
 
+    public async Task<EWayBillDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var record = await _ewayBillRepository.GetByIdAsync(id, cancellationToken);
+        return record == null ? null : ToDto(record);
+    }
+
     public async Task<EWayBillDto?> GetByDocumentIdAsync(Guid documentId, CancellationToken cancellationToken = default)
     {
         var record = await _ewayBillRepository.GetByDocumentIdAsync(documentId, cancellationToken);
@@ -154,6 +163,33 @@ public class EWayBillService : IEWayBillService
     {
         var records = await _ewayBillRepository.ListAsync(page, pageSize, cancellationToken);
         return records.Select(ToDto).ToList();
+    }
+
+    public async Task<byte[]> GeneratePdfAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var ewb = await GetByIdAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"E-Way Bill with ID {id} was not found.");
+
+        var company = await _companyRepository.GetPrimaryCompanyAsync(cancellationToken)
+            ?? throw new InvalidOperationException("Company profile not initialized.");
+
+        var companyDto = new BillMitra.Contracts.Company.CompanyProfileDto
+        {
+            Id = company.Id,
+            LegalName = company.LegalName,
+            TradeName = company.TradeName,
+            Gstin = company.Gstin,
+            Pan = company.Pan,
+            StateCode = company.StateCode,
+            StateName = company.StateName,
+            AddressLine1 = company.AddressLine1,
+            City = company.City,
+            Pincode = company.Pincode,
+            Phone = company.Phone,
+            Email = company.Email
+        };
+
+        return _pdfGenerator.GenerateEWayBillPdf(ewb, companyDto);
     }
 
     private static EWayBillDto ToDto(EWayBillRecord r) => new(

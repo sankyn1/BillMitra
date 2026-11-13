@@ -22,5 +22,6 @@ public interface ISalesService
 public interface IPdfGeneratorService
 {
     byte[] GenerateDocumentPdf(SalesDocumentDto document, BillMitra.Contracts.Company.CompanyProfileDto company, string format, bool withLetterhead = true);
+    byte[] GenerateEWayBillPdf(BillMitra.Contracts.EWayInvoice.EWayBillDto ewb, BillMitra.Contracts.Company.CompanyProfileDto company);
 }
 

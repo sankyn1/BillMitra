@@ -1073,3 +1073,4 @@ export class BmDataGridComponent implements OnInit, OnChanges {
     }
   }
 }
+

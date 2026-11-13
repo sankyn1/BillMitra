@@ -8,6 +8,7 @@ public interface ISetupService
 {
     Task<SetupStatusDto> GetStatusAsync(CancellationToken cancellationToken = default);
     Task<SetupStatusDto> CompleteSetupAsync(InitialSetupRequest request, CancellationToken cancellationToken = default);
+    Task<bool> ResetTransactionalAndMasterDataAsync(CancellationToken cancellationToken = default);
 }
 
 public interface ICompanyService

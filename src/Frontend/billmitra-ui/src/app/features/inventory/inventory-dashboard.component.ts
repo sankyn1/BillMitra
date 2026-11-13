@@ -13,12 +13,13 @@ import {
   CreateWarehouseRequest
 } from '../../core/services/inventory.service';
 import { DialogService } from '../../shared/services/dialog.service';
-import { BmPaginationComponent } from '../../shared/components';
+import { BmPaginationComponent, BmGridToolbarComponent } from '../../shared/components';
+import { GridColumnDef } from '../../shared/models';
 
 @Component({
   selector: 'app-inventory-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, BmPaginationComponent],
+  imports: [CommonModule, FormsModule, BmPaginationComponent, BmGridToolbarComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -95,50 +96,58 @@ import { BmPaginationComponent } from '../../shared/components';
 
       <!-- TAB 1: Stock Balances -->
       <div *ngIf="activeTab === 'balances'" class="space-y-4">
-        <div class="flex items-center justify-between gap-4">
-          <input type="text" [(ngModel)]="stockSearchQuery" placeholder="Search item name, SKU or HSN..."
-                 class="w-72 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-hidden" />
-          <div class="flex items-center gap-2">
+        <!-- Search, Export & Column Customization Toolbar -->
+        <bm-grid-toolbar
+          gridId="inventory_stock_balances"
+          [columns]="stockColumns"
+          [data]="stockSummaries()"
+          title="Stock_Balances"
+          [totalCount]="filteredStockSummaries().length"
+          itemName="Items"
+          searchPlaceholder="Search item name, SKU or HSN..."
+          [(searchTerm)]="stockSearchQuery"
+          (searchTermChange)="stockPage.set(1)">
+          <div toolbar-actions class="flex items-center gap-2">
             <label class="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
-              <input type="checkbox" [(ngModel)]="onlyLowStockFilter" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+              <input type="checkbox" [(ngModel)]="onlyLowStockFilter" (change)="stockPage.set(1)" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
               Show Low Stock Only
             </label>
           </div>
-        </div>
+        </bm-grid-toolbar>
 
         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
           <table class="w-full text-left text-sm text-slate-600">
             <thead class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th class="px-4 py-3.5">Product & SKU</th>
-                <th class="px-4 py-3.5">HSN / SAC</th>
-                <th class="px-4 py-3.5 text-right">Available Qty</th>
-                <th class="px-4 py-3.5 text-right">Cost Price</th>
-                <th class="px-4 py-3.5 text-right">Selling Price</th>
-                <th class="px-4 py-3.5 text-right">Stock Valuation</th>
-                <th class="px-4 py-3.5 text-center">Batches</th>
-                <th class="px-4 py-3.5 text-center">Status</th>
+                <th class="px-4 py-3.5" *ngIf="isStockColVisible('productName')">Product & SKU</th>
+                <th class="px-4 py-3.5" *ngIf="isStockColVisible('hsnCode')">HSN / SAC</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isStockColVisible('totalStockQuantity')">Available Qty</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isStockColVisible('purchasePrice')">Cost Price</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isStockColVisible('sellingPrice')">Selling Price</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isStockColVisible('totalStockValuation')">Stock Valuation</th>
+                <th class="px-4 py-3.5 text-center" *ngIf="isStockColVisible('activeBatchesCount')">Batches</th>
+                <th class="px-4 py-3.5 text-center" *ngIf="isStockColVisible('status')">Status</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
               <tr *ngFor="let item of paginatedStockSummaries()" class="hover:bg-slate-50/75">
-                <td class="px-4 py-3 font-medium text-slate-900">
+                <td class="px-4 py-3 font-medium text-slate-900" *ngIf="isStockColVisible('productName')">
                   {{ item.productName }}
                   <div class="text-xs text-slate-400 font-mono">{{ item.sku || 'No SKU' }}</div>
                 </td>
-                <td class="px-4 py-3 font-mono text-slate-600">{{ item.hsnCode }}</td>
-                <td class="px-4 py-3 text-right font-semibold text-slate-900">
+                <td class="px-4 py-3 font-mono text-slate-600" *ngIf="isStockColVisible('hsnCode')">{{ item.hsnCode }}</td>
+                <td class="px-4 py-3 text-right font-semibold text-slate-900" *ngIf="isStockColVisible('totalStockQuantity')">
                   {{ item.totalStockQuantity }} {{ item.unit }}
                 </td>
-                <td class="px-4 py-3 text-right text-slate-600">₹{{ item.purchasePrice | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-right font-medium text-slate-800">₹{{ item.sellingPrice | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-right font-semibold text-emerald-700">₹{{ item.totalStockValuation | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-center">
+                <td class="px-4 py-3 text-right text-slate-600" *ngIf="isStockColVisible('purchasePrice')">₹{{ item.purchasePrice | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-right font-medium text-slate-800" *ngIf="isStockColVisible('sellingPrice')">₹{{ item.sellingPrice | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-right font-semibold text-emerald-700" *ngIf="isStockColVisible('totalStockValuation')">₹{{ item.totalStockValuation | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-center" *ngIf="isStockColVisible('activeBatchesCount')">
                   <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                     {{ item.activeBatchesCount }} active
                   </span>
                 </td>
-                <td class="px-4 py-3 text-center">
+                <td class="px-4 py-3 text-center" *ngIf="isStockColVisible('status')">
                   <span *ngIf="item.isLowStock" class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
                     Low Stock (≤ {{ item.minStockAlert }})
                   </span>
@@ -148,7 +157,7 @@ import { BmPaginationComponent } from '../../shared/components';
                 </td>
               </tr>
               <tr *ngIf="filteredStockSummaries().length === 0">
-                <td colspan="8" class="px-4 py-12 text-center text-slate-400">
+                <td [attr.colspan]="visibleStockColsCount" class="px-4 py-12 text-center text-slate-400">
                   No products found matching current criteria.
                 </td>
               </tr>
@@ -545,6 +554,26 @@ export class InventoryDashboardComponent implements OnInit {
 
   stockPage = signal(1);
   stockPageSize = signal(10);
+
+  stockColumns: GridColumnDef[] = [
+    { key: 'productName', header: 'Product & SKU', locked: true, formatter: (i) => `${i.productName} (${i.sku || 'No SKU'})` },
+    { key: 'hsnCode', header: 'HSN / SAC' },
+    { key: 'totalStockQuantity', header: 'Available Qty', align: 'right', formatter: (i) => `${i.totalStockQuantity} ${i.unit}` },
+    { key: 'purchasePrice', header: 'Cost Price', align: 'right', formatter: (i) => `₹ ${i.purchasePrice}` },
+    { key: 'sellingPrice', header: 'Selling Price', align: 'right', formatter: (i) => `₹ ${i.sellingPrice}` },
+    { key: 'totalStockValuation', header: 'Stock Valuation', align: 'right', formatter: (i) => `₹ ${i.totalStockValuation}` },
+    { key: 'activeBatchesCount', header: 'Batches', align: 'center', formatter: (i) => `${i.activeBatchesCount} active` },
+    { key: 'status', header: 'Status', align: 'center', formatter: (i) => i.isLowStock ? 'Low Stock' : 'Adequate' }
+  ];
+
+  isStockColVisible(key: string): boolean {
+    const col = this.stockColumns.find(c => c.key === key);
+    return col ? col.visible !== false : true;
+  }
+
+  get visibleStockColsCount(): number {
+    return this.stockColumns.filter(c => c.visible !== false).length;
+  }
 
   batchPage = signal(1);
   batchPageSize = signal(10);

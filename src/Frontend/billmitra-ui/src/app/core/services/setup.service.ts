@@ -185,5 +185,9 @@ export class SetupService {
   public removeLetterhead(): Observable<ApiResponse<boolean>> {
     return this.http.delete<ApiResponse<boolean>>(`${this.baseUrl}/company/letterhead`);
   }
+
+  public resetData(): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.baseUrl}/setup/reset-data`, {});
+  }
 }
 

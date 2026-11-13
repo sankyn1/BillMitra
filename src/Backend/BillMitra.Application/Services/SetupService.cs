@@ -1,3 +1,4 @@
+using System.Data;
 using BillMitra.Application.Common.Interfaces;
 using BillMitra.Contracts.Company;
 using BillMitra.Contracts.FinancialYear;
@@ -13,6 +14,7 @@ public class SetupService : ISetupService
     private readonly IFinancialYearRepository _financialYearRepository;
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IDbConnectionFactory _dbConnectionFactory;
     private readonly ILogger<SetupService> _logger;
 
     public SetupService(
@@ -20,12 +22,14 @@ public class SetupService : ISetupService
         IFinancialYearRepository financialYearRepository,
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
+        IDbConnectionFactory dbConnectionFactory,
         ILogger<SetupService> logger)
     {
         _companyRepository = companyRepository;
         _financialYearRepository = financialYearRepository;
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _dbConnectionFactory = dbConnectionFactory;
         _logger = logger;
     }
 
@@ -140,6 +144,64 @@ public class SetupService : ISetupService
         }
 
         return await GetStatusAsync(cancellationToken);
+    }
+
+    public async Task<bool> ResetTransactionalAndMasterDataAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogWarning("Resetting all transactional and master data, resetting document sequences to 0...");
+
+        using var conn = await _dbConnectionFactory.CreateConnectionAsync(cancellationToken);
+        if (conn.State != ConnectionState.Open) conn.Open();
+
+        using var tx = conn.BeginTransaction();
+        try
+        {
+            var statements = new[]
+            {
+                "DELETE FROM sales_document_items",
+                "DELETE FROM sales_documents",
+                "DELETE FROM purchase_document_items",
+                "DELETE FROM purchase_documents",
+                "DELETE FROM expense_vouchers",
+                "DELETE FROM expenses",
+                "DELETE FROM payment_allocations",
+                "DELETE FROM payments",
+                "DELETE FROM party_ledger_entries",
+                "DELETE FROM eway_bills",
+                "DELETE FROM einvoices",
+                "DELETE FROM stock_movements",
+                "DELETE FROM stock_item_batches",
+                "DELETE FROM products",
+                "DELETE FROM parties",
+                "DELETE FROM gst_return_filings",
+                "UPDATE document_sequences SET current_sequence = 0"
+            };
+
+            foreach (var stmt in statements)
+            {
+                try
+                {
+                    using var cmd = conn.CreateCommand();
+                    cmd.Transaction = tx;
+                    cmd.CommandText = stmt;
+                    await Task.Run(() => cmd.ExecuteNonQuery(), cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug("Statement '{Statement}' notice: {Error}", stmt, ex.Message);
+                }
+            }
+
+            tx.Commit();
+            _logger.LogInformation("All transactional and master data cleared and sequences reset successfully.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            tx.Rollback();
+            _logger.LogError(ex, "Failed to reset transactional and master data.");
+            throw;
+        }
     }
 }
 

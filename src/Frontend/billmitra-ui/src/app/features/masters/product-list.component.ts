@@ -48,9 +48,6 @@ import {
           <p class="master-subtitle">Manage items, HSN/SAC classification, GST tax rates, units, and stock tracking</p>
         </div>
         <div class="master-actions">
-          <button bmButton bmVariant="outline" bmSize="md" (click)="openQuickSeed()">
-            <i class="pi pi-plus-circle"></i> Seed Sample Items
-          </button>
           <button bmButton bmVariant="primary" bmSize="md" (click)="openCreateModal()">
             <i class="pi pi-plus"></i> Add New Product (F3)
           </button>
@@ -84,25 +81,25 @@ import {
           <table bmTable [bmStriped]="true" [bmHover]="true">
             <thead>
               <tr>
-                <th bmTableHeaderCell>Item Code / SKU</th>
-                <th bmTableHeaderCell>Product / Service Name</th>
-                <th bmTableHeaderCell>HSN / SAC</th>
-                <th bmTableHeaderCell>UOM</th>
-                <th bmTableHeaderCell bmAlign="right">Sale Price</th>
-                <th bmTableHeaderCell bmAlign="right">Purchase Price</th>
-                <th bmTableHeaderCell bmAlign="center">GST %</th>
-                <th bmTableHeaderCell bmAlign="right">Current Stock</th>
-                <th bmTableHeaderCell bmAlign="center">Actions</th>
+                <th bmTableHeaderCell *ngIf="isColVisible('itemCode')">Item Code / SKU</th>
+                <th bmTableHeaderCell *ngIf="isColVisible('name')">Product / Service Name</th>
+                <th bmTableHeaderCell *ngIf="isColVisible('hsnSacCode')">HSN / SAC</th>
+                <th bmTableHeaderCell *ngIf="isColVisible('unitCode')">UOM</th>
+                <th bmTableHeaderCell bmAlign="right" *ngIf="isColVisible('salePrice')">Sale Price</th>
+                <th bmTableHeaderCell bmAlign="right" *ngIf="isColVisible('purchasePrice')">Purchase Price</th>
+                <th bmTableHeaderCell bmAlign="center" *ngIf="isColVisible('gstRatePercent')">GST %</th>
+                <th bmTableHeaderCell bmAlign="right" *ngIf="isColVisible('currentStock')">Current Stock</th>
+                <th bmTableHeaderCell bmAlign="center" *ngIf="isColVisible('actions')">Actions</th>
               </tr>
             </thead>
             <tbody>
               @if (mastersService.products().length === 0) {
                 <tr bmTableRow>
-                  <td bmTableCell colspan="9" class="text-center py-5">
+                  <td bmTableCell [attr.colspan]="visibleColsCount" class="text-center py-5">
                     <div class="empty-state">
                       <i class="pi pi-box empty-icon"></i>
                       <h4>No Products Found</h4>
-                      <p>Add your first product or click "Seed Sample Items" to load realistic Indian GST items.</p>
+                      <p>Add your first product or service item by clicking "+ Add Product".</p>
                       <button bmButton bmVariant="primary" bmSize="sm" (click)="openCreateModal()">
                         <i class="pi pi-plus"></i> Add Product
                       </button>
@@ -112,26 +109,26 @@ import {
               } @else {
                 @for (item of paginatedProducts(); track item.id) {
                   <tr bmTableRow>
-                    <td bmTableCell><strong>{{ item.itemCode }}</strong></td>
-                    <td bmTableCell>
+                    <td bmTableCell *ngIf="isColVisible('itemCode')"><strong>{{ item.itemCode }}</strong></td>
+                    <td bmTableCell *ngIf="isColVisible('name')">
                       <div>{{ item.name }}</div>
                       @if (item.categoryName) {
                         <small class="text-muted">{{ item.categoryName }}</small>
                       }
                     </td>
-                    <td bmTableCell><code>{{ item.hsnSacCode || 'N/A' }}</code></td>
-                    <td bmTableCell><span bmBadge="neutral">{{ item.unitCode }}</span></td>
-                    <td bmTableCell bmAlign="right"><strong>₹ {{ item.salePrice | number:'1.2-2' }}</strong></td>
-                    <td bmTableCell bmAlign="right" class="text-muted">₹ {{ item.purchasePrice | number:'1.2-2' }}</td>
-                    <td bmTableCell bmAlign="center">
+                    <td bmTableCell *ngIf="isColVisible('hsnSacCode')"><code>{{ item.hsnSacCode || 'N/A' }}</code></td>
+                    <td bmTableCell *ngIf="isColVisible('unitCode')"><span bmBadge="neutral">{{ item.unitCode }}</span></td>
+                    <td bmTableCell bmAlign="right" *ngIf="isColVisible('salePrice')"><strong>₹ {{ item.salePrice | number:'1.2-2' }}</strong></td>
+                    <td bmTableCell bmAlign="right" class="text-muted" *ngIf="isColVisible('purchasePrice')">₹ {{ item.purchasePrice | number:'1.2-2' }}</td>
+                    <td bmTableCell bmAlign="center" *ngIf="isColVisible('gstRatePercent')">
                       <span bmBadge="info">{{ item.gstRatePercent }}%</span>
                     </td>
-                    <td bmTableCell bmAlign="right">
+                    <td bmTableCell bmAlign="right" *ngIf="isColVisible('currentStock')">
                       <span [class.text-danger]="item.currentStock <= item.minStockAlert" [class.text-success]="item.currentStock > item.minStockAlert">
                         <strong>{{ item.currentStock }} {{ item.unitCode }}</strong>
                       </span>
                     </td>
-                    <td bmTableCell bmAlign="center">
+                    <td bmTableCell bmAlign="center" *ngIf="isColVisible('actions')">
                       <div class="btn-group">
                         <button bmButton bmVariant="outline" bmSize="sm" (click)="editProduct(item)" title="Edit Item">
                           <i class="pi pi-pencil"></i>
@@ -313,6 +310,27 @@ export class ProductListComponent implements OnInit {
   public currentPage = signal<number>(1);
   public pageSize = signal<number>(10);
 
+  public productColumns: GridColumnDef[] = [
+    { key: 'itemCode', header: 'Item Code / SKU', locked: true },
+    { key: 'name', header: 'Product / Service Name', locked: true, formatter: (i) => `${i.name}${i.categoryName ? ' (' + i.categoryName + ')' : ''}` },
+    { key: 'hsnSacCode', header: 'HSN / SAC', formatter: (i) => i.hsnSacCode || 'N/A' },
+    { key: 'unitCode', header: 'UOM' },
+    { key: 'salePrice', header: 'Sale Price', align: 'right', formatter: (i) => `₹ ${i.salePrice}` },
+    { key: 'purchasePrice', header: 'Purchase Price', align: 'right', formatter: (i) => `₹ ${i.purchasePrice}` },
+    { key: 'gstRatePercent', header: 'GST %', align: 'center', formatter: (i) => `${i.gstRatePercent}%` },
+    { key: 'currentStock', header: 'Current Stock', align: 'right', formatter: (i) => `${i.currentStock} ${i.unitCode || ''}` },
+    { key: 'actions', header: 'Actions', exportable: false, sortable: false, locked: true }
+  ];
+
+  public isColVisible(key: string): boolean {
+    const col = this.productColumns.find(c => c.key === key);
+    return col ? col.visible !== false : true;
+  }
+
+  public get visibleColsCount(): number {
+    return this.productColumns.filter(c => c.visible !== false).length;
+  }
+
   public paginatedProducts = computed(() => {
     const items = this.mastersService.products();
     const start = (this.currentPage() - 1) * this.pageSize();
@@ -404,19 +422,6 @@ export class ProductListComponent implements OnInit {
         next: () => this.dialogService.toast('Product marked as inactive.', 'info')
       });
     }
-  }
-
-  openQuickSeed(): void {
-    const sampleItems: CreateOrUpdateProductRequest[] = [
-      { itemCode: 'ITEM-1001', name: 'Alphonso Mango Pulp (850g Tin)', hsnSacCode: '200899', unitCode: 'BOX', salePrice: 220.00, purchasePrice: 165.00, gstRatePercent: 12.00, cessPercent: 0, isTaxInclusive: false, openingStock: 50, minStockAlert: 10, itemType: 1 },
-      { itemCode: 'ITEM-1002', name: 'Cotton Bed Sheet Double King', hsnSacCode: '630231', unitCode: 'PCS', salePrice: 1250.00, purchasePrice: 850.00, gstRatePercent: 5.00, cessPercent: 0, isTaxInclusive: false, openingStock: 30, minStockAlert: 5, itemType: 1 },
-      { itemCode: 'ITEM-1003', name: 'Stainless Steel Water Bottle 1L', hsnSacCode: '732393', unitCode: 'PCS', salePrice: 450.00, purchasePrice: 280.00, gstRatePercent: 18.00, cessPercent: 0, isTaxInclusive: false, openingStock: 100, minStockAlert: 20, itemType: 1 },
-      { itemCode: 'ITEM-1004', name: 'Annual Software Maintenance Service', hsnSacCode: '998314', unitCode: 'NOS', salePrice: 15000.00, purchasePrice: 0.00, gstRatePercent: 18.00, cessPercent: 0, isTaxInclusive: false, openingStock: 0, minStockAlert: 0, itemType: 2 }
-    ];
-
-    sampleItems.forEach(item => {
-      this.mastersService.createProduct(item).subscribe();
-    });
   }
 
   private getEmptyForm(): CreateOrUpdateProductRequest {

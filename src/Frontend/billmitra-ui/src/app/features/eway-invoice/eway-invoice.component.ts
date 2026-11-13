@@ -115,6 +115,9 @@ import { BmPaginationComponent } from '../../shared/components';
                 </td>
                 <td>
                   <div class="action-btn-group">
+                    <button class="btn-icon text-primary" title="Print / Download E-Way Bill (EWB-01)" (click)="printEwb(b)">
+                      <i class="pi pi-print"></i>
+                    </button>
                     <button class="btn-icon" title="Update Vehicle / Part-B" *ngIf="b.status !== 3" (click)="openUpdateVehicleDialog(b)">
                       <i class="pi pi-car"></i>
                     </button>
@@ -601,5 +604,9 @@ export class EWayInvoiceComponent implements OnInit {
     navigator.clipboard.writeText(irn).then(() => {
       this.dialogService.toast('IRN copied to clipboard!', 'info');
     });
+  }
+
+  printEwb(b: EWayBillDto) {
+    this.ewayService.printOrDownloadPdf(b.id, `EWB_${b.ewayBillNumber || b.docNumber}.pdf`);
   }
 }

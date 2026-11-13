@@ -61,6 +61,37 @@ public class EWayBillController : ControllerBase
         }
     }
 
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<EWayBillDto>>> GetById(Guid id, CancellationToken ct)
+    {
+        var result = await _ewayBillService.GetByIdAsync(id, ct);
+        if (result == null) return NotFound(ApiResponse<EWayBillDto>.Fail("E-Way Bill not found."));
+        return Ok(ApiResponse<EWayBillDto>.Ok(result));
+    }
+
+    [HttpGet("{id:guid}/pdf")]
+    public async Task<IActionResult> DownloadPdf(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            var ewb = await _ewayBillService.GetByIdAsync(id, ct);
+            if (ewb == null)
+            {
+                return NotFound(ApiResponse<string>.Fail("E-Way Bill not found."));
+            }
+
+            var pdfBytes = await _ewayBillService.GeneratePdfAsync(id, ct);
+            var safeNumber = ewb.EWayBillNumber.Replace("/", "-").Replace(" ", "");
+            var fileName = $"EWayBill_{safeNumber}.pdf";
+
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse<string>.Fail($"Failed to generate E-Way Bill PDF: {ex.Message}"));
+        }
+    }
+
     [HttpGet("document/{docId:guid}")]
     public async Task<ActionResult<ApiResponse<EWayBillDto?>>> GetByDocumentId(Guid docId, CancellationToken ct)
     {

@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { SalesService, SalesDocumentDto, DocumentType, DocumentStatus } from '../../core/services/sales.service';
 import { DialogService } from '../../shared/services/dialog.service';
 import { DocumentPreviewDialogComponent } from './document-preview-dialog.component';
-import { BmPaginationComponent } from '../../shared/components';
+import { BmPaginationComponent, BmGridToolbarComponent } from '../../shared/components';
+import { GridColumnDef } from '../../shared/models';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -26,6 +27,7 @@ import {
     FormsModule,
     DocumentPreviewDialogComponent,
     BmPaginationComponent,
+    BmGridToolbarComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -51,70 +53,68 @@ import {
         </div>
       </div>
 
-      <div bmPanel [bmBordered]="true" class="bm-list-panel">
-        <div bmPanelHeader class="bm-filter-bar">
-          <div class="bm-search-group">
-            <i class="pi pi-search bm-search-icon"></i>
-            <input
-              bmInput
-              type="text"
-              placeholder="Search by customer, invoice no, or draft..."
-              [(ngModel)]="searchQuery"
-              (keyup.enter)="loadDocuments()"
-              class="bm-search-input"
-            />
-          </div>
+      <!-- Search, Export & Column Customization Toolbar -->
+      <bm-grid-toolbar
+        gridId="sales_invoices"
+        [columns]="invoiceColumns"
+        [data]="salesService.documents()"
+        title="Sales_Invoices"
+        [totalCount]="salesService.documents().length"
+        itemName="Documents"
+        searchPlaceholder="Search by customer, invoice no, or draft..."
+        [(searchTerm)]="searchQuery"
+        (searchTermChange)="onSearchChange($event)">
+        <div toolbar-actions class="bm-filters">
+          <select bmSelect [(ngModel)]="selectedType" (ngModelChange)="loadDocuments()">
+            <option [ngValue]="null">All Document Types</option>
+            <option [ngValue]="1">Tax Invoice</option>
+            <option [ngValue]="2">Bill of Supply</option>
+            <option [ngValue]="3">Quotation / Estimate</option>
+            <option [ngValue]="4">Proforma Invoice</option>
+            <option [ngValue]="5">Credit Note</option>
+            <option [ngValue]="6">Debit Note</option>
+          </select>
 
-          <div class="bm-filters">
-            <select bmSelect [(ngModel)]="selectedType" (ngModelChange)="loadDocuments()">
-              <option [ngValue]="null">All Document Types</option>
-              <option [ngValue]="1">Tax Invoice</option>
-              <option [ngValue]="2">Bill of Supply</option>
-              <option [ngValue]="3">Quotation / Estimate</option>
-              <option [ngValue]="4">Proforma Invoice</option>
-              <option [ngValue]="5">Credit Note</option>
-              <option [ngValue]="6">Debit Note</option>
-            </select>
+          <select bmSelect [(ngModel)]="selectedStatus" (ngModelChange)="loadDocuments()">
+            <option [ngValue]="null">All Statuses</option>
+            <option [ngValue]="1">Drafts Only</option>
+            <option [ngValue]="2">Finalized / Issued</option>
+            <option [ngValue]="3">Cancelled</option>
+          </select>
 
-            <select bmSelect [(ngModel)]="selectedStatus" (ngModelChange)="loadDocuments()">
-              <option [ngValue]="null">All Statuses</option>
-              <option [ngValue]="1">Drafts Only</option>
-              <option [ngValue]="2">Finalized / Issued</option>
-              <option [ngValue]="3">Cancelled</option>
-            </select>
-
-            <button bmButton="secondary" bmSize="sm" (click)="loadDocuments()">
-              <i class="pi pi-refresh"></i> Refresh
-            </button>
-          </div>
+          <button bmButton="secondary" bmSize="sm" (click)="loadDocuments()">
+            <i class="pi pi-refresh"></i> Refresh
+          </button>
         </div>
+      </bm-grid-toolbar>
 
-        <div bmPanelBody class="bm-table-container">
+      <div bmPanel [bmBordered]="true" class="bm-list-panel">
+        <div bmPanelBody class="bm-table-container p-0">
           <table bmTable [bmStriped]="true" [bmHover]="true">
             <thead>
               <tr>
-                <th bmHeaderCell>Doc No / Ref</th>
-                <th bmHeaderCell>Type</th>
-                <th bmHeaderCell>Date</th>
-                <th bmHeaderCell>Customer / Party</th>
-                <th bmHeaderCell>POS</th>
-                <th bmHeaderCell class="bm-align-right">Taxable (₹)</th>
-                <th bmHeaderCell class="bm-align-right">Tax (₹)</th>
-                <th bmHeaderCell class="bm-align-right">Grand Total (₹)</th>
-                <th bmHeaderCell class="bm-align-center">Status</th>
-                <th bmHeaderCell class="bm-align-center">Actions</th>
+                <th bmHeaderCell *ngIf="isColVisible('documentNumber')">Doc No / Ref</th>
+                <th bmHeaderCell *ngIf="isColVisible('documentType')">Type</th>
+                <th bmHeaderCell *ngIf="isColVisible('documentDate')">Date</th>
+                <th bmHeaderCell *ngIf="isColVisible('customerName')">Customer / Party</th>
+                <th bmHeaderCell *ngIf="isColVisible('placeOfSupplyStateCode')">POS</th>
+                <th bmHeaderCell class="bm-align-right" *ngIf="isColVisible('subTotalTaxable')">Taxable (₹)</th>
+                <th bmHeaderCell class="bm-align-right" *ngIf="isColVisible('totalTax')">Tax (₹)</th>
+                <th bmHeaderCell class="bm-align-right" *ngIf="isColVisible('grandTotal')">Grand Total (₹)</th>
+                <th bmHeaderCell class="bm-align-center" *ngIf="isColVisible('documentStatus')">Status</th>
+                <th bmHeaderCell class="bm-align-center" *ngIf="isColVisible('actions')">Actions</th>
               </tr>
             </thead>
             <tbody>
               @if (salesService.isLoading()) {
                 <tr>
-                  <td colspan="10" class="bm-loading-cell">
+                  <td [attr.colspan]="visibleColsCount" class="bm-loading-cell">
                     <i class="pi pi-spin pi-spinner"></i> Loading sales documents...
                   </td>
                 </tr>
               } @else if (salesService.documents().length === 0) {
                 <tr>
-                  <td colspan="10" class="bm-empty-cell">
+                  <td [attr.colspan]="visibleColsCount" class="bm-empty-cell">
                     <div class="bm-empty-state">
                       <i class="pi pi-file-edit bm-empty-icon"></i>
                       <h3>No sales documents found</h3>
@@ -128,31 +128,31 @@ import {
               } @else {
                 @for (doc of paginatedDocuments(); track doc.id) {
                   <tr>
-                    <td bmCell>
+                    <td bmCell *ngIf="isColVisible('documentNumber')">
                       <strong class="bm-doc-number">{{ doc.documentNumber || doc.draftNumber }}</strong>
                       @if (doc.documentNumber && doc.draftNumber) {
                         <div class="bm-subtext">Ref: {{ doc.draftNumber }}</div>
                       }
                     </td>
-                    <td bmCell>
+                    <td bmCell *ngIf="isColVisible('documentType')">
                       <span class="bm-type-pill">{{ getDocTypeName(doc.documentType) }}</span>
                     </td>
-                    <td bmCell>{{ doc.documentDate | date:'dd-MMM-yyyy' }}</td>
-                    <td bmCell>
+                    <td bmCell *ngIf="isColVisible('documentDate')">{{ doc.documentDate | date:'dd-MMM-yyyy' }}</td>
+                    <td bmCell *ngIf="isColVisible('customerName')">
                       <strong>{{ doc.customerName }}</strong>
                       @if (doc.customerGstin) {
                         <div class="bm-gstin-code">{{ doc.customerGstin }}</div>
                       }
                     </td>
-                    <td bmCell>
+                    <td bmCell *ngIf="isColVisible('placeOfSupplyStateCode')">
                       <span class="bm-pos-tag">{{ doc.placeOfSupplyStateCode }}</span>
                     </td>
-                    <td bmCell class="bm-align-right">₹{{ doc.subTotalTaxable | number:'1.2-2' }}</td>
-                    <td bmCell class="bm-align-right">₹{{ doc.totalTax | number:'1.2-2' }}</td>
-                    <td bmCell class="bm-align-right">
+                    <td bmCell class="bm-align-right" *ngIf="isColVisible('subTotalTaxable')">₹{{ doc.subTotalTaxable | number:'1.2-2' }}</td>
+                    <td bmCell class="bm-align-right" *ngIf="isColVisible('totalTax')">₹{{ doc.totalTax | number:'1.2-2' }}</td>
+                    <td bmCell class="bm-align-right" *ngIf="isColVisible('grandTotal')">
                       <strong class="bm-grand-total">₹{{ doc.grandTotal | number:'1.2-2' }}</strong>
                     </td>
-                    <td bmCell class="bm-align-center">
+                    <td bmCell class="bm-align-center" *ngIf="isColVisible('documentStatus')">
                       @if (doc.documentStatus === 1) {
                         <span bmBadge="warning">Draft</span>
                       } @else if (doc.documentStatus === 2) {
@@ -167,7 +167,7 @@ import {
                         <span bmBadge="secondary">Converted</span>
                       }
                     </td>
-                    <td bmCell class="bm-align-center">
+                    <td bmCell class="bm-align-center" *ngIf="isColVisible('actions')">
                       <div class="bm-action-buttons">
                         <!-- In-App Print & Preview Dialog -->
                         <button
@@ -444,6 +444,33 @@ export class InvoiceListComponent implements OnInit {
 
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
+
+  invoiceColumns: GridColumnDef[] = [
+    { key: 'documentNumber', header: 'Doc No / Ref', locked: true, formatter: (d) => d.documentNumber || d.draftNumber },
+    { key: 'documentType', header: 'Type', formatter: (d) => this.getDocTypeName(d.documentType) },
+    { key: 'documentDate', header: 'Date', formatter: (d) => new Date(d.documentDate).toLocaleDateString() },
+    { key: 'customerName', header: 'Customer / Party', formatter: (d) => `${d.customerName} ${d.customerGstin ? '(' + d.customerGstin + ')' : ''}` },
+    { key: 'placeOfSupplyStateCode', header: 'POS' },
+    { key: 'subTotalTaxable', header: 'Taxable (₹)', align: 'right', formatter: (d) => `₹ ${d.subTotalTaxable}` },
+    { key: 'totalTax', header: 'Tax (₹)', align: 'right', formatter: (d) => `₹ ${d.totalTax}` },
+    { key: 'grandTotal', header: 'Grand Total (₹)', align: 'right', formatter: (d) => `₹ ${d.grandTotal}` },
+    { key: 'documentStatus', header: 'Status', align: 'center', formatter: (d) => d.documentStatus === 1 ? 'Draft' : d.documentStatus === 2 ? 'Finalized' : 'Cancelled' },
+    { key: 'actions', header: 'Actions', exportable: false, sortable: false, locked: true }
+  ];
+
+  isColVisible(key: string): boolean {
+    const col = this.invoiceColumns.find(c => c.key === key);
+    return col ? col.visible !== false : true;
+  }
+
+  get visibleColsCount(): number {
+    return this.invoiceColumns.filter(c => c.visible !== false).length;
+  }
+
+  onSearchChange(val: string): void {
+    this.searchQuery = val;
+    this.loadDocuments();
+  }
 
   paginatedDocuments = computed(() => {
     const docs = this.salesService.documents();

@@ -49,9 +49,6 @@ import {
           <p class="master-subtitle">Manage B2B/B2C parties, GSTIN registration, billing/shipping states, and ledger balances</p>
         </div>
         <div class="master-actions">
-          <button bmButton bmVariant="outline" bmSize="md" (click)="openQuickSeed()">
-            <i class="pi pi-user-plus"></i> Seed Sample Parties
-          </button>
           <button bmButton bmVariant="primary" bmSize="md" (click)="openCreateModal()">
             <i class="pi pi-plus"></i> Add New Party (F4)
           </button>
@@ -101,7 +98,7 @@ import {
                     <div class="empty-state">
                       <i class="pi pi-users empty-icon"></i>
                       <h4>No Customers or Suppliers Found</h4>
-                      <p>Register customer accounts for GST invoicing or click "Seed Sample Parties" to populate demo records.</p>
+                      <p>Register customer or supplier accounts for GST invoicing by clicking "+ Add Party".</p>
                       <button bmButton bmVariant="primary" bmSize="sm" (click)="openCreateModal()">
                         <i class="pi pi-plus"></i> Add Party
                       </button>
@@ -434,18 +431,6 @@ export class PartyListComponent implements OnInit {
         next: () => this.dialogService.toast('Party marked as inactive.', 'info')
       });
     }
-  }
-
-  openQuickSeed(): void {
-    const sampleParties: CreateOrUpdatePartyRequest[] = [
-      { partyType: 1, name: 'Metro Cash & Carry India Pvt Ltd', tradeName: 'Metro Wholesale', gstin: '24AAACM1234F1Z2', gstRegistrationType: 1, stateCode: '24', stateName: 'Gujarat', addressLine1: 'Plot 12, GIDC Estate', city: 'Ahmedabad', pincode: '382445', phone: '9825012345', email: 'accounts@metroindia.com', creditLimit: 250000 },
-      { partyType: 1, name: 'Sharma Kirana Store', tradeName: 'Sharma General', gstin: '', gstRegistrationType: 3, stateCode: '24', stateName: 'Gujarat', addressLine1: 'Shop 4, Anand Nagar', city: 'Surat', pincode: '395001', phone: '9426098765', email: 'sharma.kirana@gmail.com', creditLimit: 50000 },
-      { partyType: 2, name: 'Godrej Agrovet Agro Supplies', tradeName: 'Godrej Agro', gstin: '27AAACG0000A1Z5', gstRegistrationType: 1, stateCode: '27', stateName: 'Maharashtra', addressLine1: 'Eastern Express Highway, Vikhroli', city: 'Mumbai', pincode: '400079', phone: '9820011223', email: 'vendorcare@godrejagro.com', creditLimit: 500000 }
-    ];
-
-    sampleParties.forEach(p => {
-      this.mastersService.createParty(p).subscribe();
-    });
   }
 
   private getEmptyForm(): CreateOrUpdatePartyRequest {

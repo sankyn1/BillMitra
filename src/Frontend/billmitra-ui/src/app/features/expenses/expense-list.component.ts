@@ -7,12 +7,13 @@ import {
   CreateExpenseRequest
 } from '../../core/services/purchase-expense.service';
 import { DialogService } from '../../shared/services/dialog.service';
-import { BmPaginationComponent } from '../../shared/components';
+import { BmPaginationComponent, BmGridToolbarComponent } from '../../shared/components';
+import { GridColumnDef } from '../../shared/models';
 
 @Component({
   selector: 'app-expense-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, BmPaginationComponent],
+  imports: [CommonModule, FormsModule, BmPaginationComponent, BmGridToolbarComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -61,20 +62,25 @@ import { BmPaginationComponent } from '../../shared/components';
         </div>
       </div>
 
-      <!-- Filters -->
-      <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="w-64">
-            <input type="text" [(ngModel)]="searchQuery" placeholder="Search payee, voucher or notes..."
-                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-hidden" />
-          </div>
-          <select [(ngModel)]="categoryFilter"
-                  class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-500 focus:outline-hidden">
+      <!-- Search, Export & Column Customization Toolbar -->
+      <bm-grid-toolbar
+        gridId="expenses"
+        [columns]="expenseColumns"
+        [data]="expenses()"
+        title="Expense_Vouchers"
+        [totalCount]="filteredExpenses().length"
+        itemName="Expenses"
+        searchPlaceholder="Search payee, voucher or notes..."
+        [(searchTerm)]="searchQuery"
+        (searchTermChange)="currentPage.set(1)">
+        <div toolbar-actions class="flex items-center gap-2">
+          <select [(ngModel)]="categoryFilter" (change)="currentPage.set(1)"
+                  class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-emerald-500 focus:outline-hidden">
             <option value="">All Categories</option>
             <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
           </select>
         </div>
-      </div>
+      </bm-grid-toolbar>
 
       <!-- Expense Vouchers Table -->
       <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
@@ -82,41 +88,41 @@ import { BmPaginationComponent } from '../../shared/components';
           <table class="w-full text-left text-sm text-slate-600">
             <thead class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th class="px-4 py-3.5">Voucher #</th>
-                <th class="px-4 py-3.5">Date</th>
-                <th class="px-4 py-3.5">Category</th>
-                <th class="px-4 py-3.5">Payee / Vendor</th>
-                <th class="px-4 py-3.5">Payment Mode</th>
-                <th class="px-4 py-3.5 text-right">Net Amount</th>
-                <th class="px-4 py-3.5 text-right">GST</th>
-                <th class="px-4 py-3.5 text-right">Total Outflow</th>
-                <th class="px-4 py-3.5 text-center">ITC</th>
+                <th class="px-4 py-3.5" *ngIf="isColVisible('voucherNumber')">Voucher #</th>
+                <th class="px-4 py-3.5" *ngIf="isColVisible('expenseDate')">Date</th>
+                <th class="px-4 py-3.5" *ngIf="isColVisible('expenseCategoryName')">Category</th>
+                <th class="px-4 py-3.5" *ngIf="isColVisible('payeeName')">Payee / Vendor</th>
+                <th class="px-4 py-3.5" *ngIf="isColVisible('paymentModeName')">Payment Mode</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isColVisible('amount')">Net Amount</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isColVisible('gstAmount')">GST</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isColVisible('totalAmount')">Total Outflow</th>
+                <th class="px-4 py-3.5 text-center" *ngIf="isColVisible('isItcClaimable')">ITC</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
               <tr *ngFor="let exp of paginatedExpenses()" class="hover:bg-slate-50/75">
-                <td class="px-4 py-3 font-mono font-medium text-slate-900">{{ exp.voucherNumber }}</td>
-                <td class="px-4 py-3 text-slate-600">{{ exp.expenseDate | date:'mediumDate' }}</td>
-                <td class="px-4 py-3">
+                <td class="px-4 py-3 font-mono font-medium text-slate-900" *ngIf="isColVisible('voucherNumber')">{{ exp.voucherNumber }}</td>
+                <td class="px-4 py-3 text-slate-600" *ngIf="isColVisible('expenseDate')">{{ exp.expenseDate | date:'mediumDate' }}</td>
+                <td class="px-4 py-3" *ngIf="isColVisible('expenseCategoryName')">
                   <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                     {{ exp.expenseCategoryName }}
                   </span>
                 </td>
-                <td class="px-4 py-3 font-medium text-slate-800">{{ exp.payeeName || 'Cash Voucher' }}</td>
-                <td class="px-4 py-3">
+                <td class="px-4 py-3 font-medium text-slate-800" *ngIf="isColVisible('payeeName')">{{ exp.payeeName || 'Cash Voucher' }}</td>
+                <td class="px-4 py-3" *ngIf="isColVisible('paymentModeName')">
                   <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                         [ngClass]="exp.paymentMode === 1 ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'">
                     {{ exp.paymentModeName }}
                   </span>
                   <div *ngIf="exp.referenceNumber" class="text-xs text-slate-400 font-mono">{{ exp.referenceNumber }}</div>
                 </td>
-                <td class="px-4 py-3 text-right font-medium text-slate-700">₹{{ exp.amount | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-right text-slate-600">
+                <td class="px-4 py-3 text-right font-medium text-slate-700" *ngIf="isColVisible('amount')">₹{{ exp.amount | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-right text-slate-600" *ngIf="isColVisible('gstAmount')">
                   <span *ngIf="exp.gstAmount > 0">₹{{ exp.gstAmount | number:'1.2-2' }} ({{ exp.gstRate }}%)</span>
                   <span *ngIf="exp.gstAmount === 0" class="text-slate-400">-</span>
                 </td>
-                <td class="px-4 py-3 text-right font-semibold text-slate-900">₹{{ exp.totalAmount | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-center">
+                <td class="px-4 py-3 text-right font-semibold text-slate-900" *ngIf="isColVisible('totalAmount')">₹{{ exp.totalAmount | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-center" *ngIf="isColVisible('isItcClaimable')">
                   <span *ngIf="exp.isItcClaimable" class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
                     Eligible
                   </span>
@@ -126,7 +132,7 @@ import { BmPaginationComponent } from '../../shared/components';
                 </td>
               </tr>
               <tr *ngIf="filteredExpenses().length === 0">
-                <td colspan="9" class="px-4 py-12 text-center text-slate-400">
+                <td [attr.colspan]="visibleColsCount" class="px-4 py-12 text-center text-slate-400">
                   No expenses recorded matching the current filter.
                 </td>
               </tr>
@@ -279,6 +285,27 @@ export class ExpenseListComponent implements OnInit {
 
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
+
+  expenseColumns: GridColumnDef[] = [
+    { key: 'voucherNumber', header: 'Voucher #', locked: true },
+    { key: 'expenseDate', header: 'Date', formatter: (e) => new Date(e.expenseDate).toLocaleDateString() },
+    { key: 'expenseCategoryName', header: 'Category' },
+    { key: 'payeeName', header: 'Payee / Vendor', formatter: (e) => e.payeeName || 'Cash Voucher' },
+    { key: 'paymentModeName', header: 'Payment Mode', formatter: (e) => `${e.paymentModeName}${e.referenceNumber ? ' (' + e.referenceNumber + ')' : ''}` },
+    { key: 'amount', header: 'Net Amount', align: 'right', formatter: (e) => `₹ ${e.amount}` },
+    { key: 'gstAmount', header: 'GST', align: 'right', formatter: (e) => e.gstAmount > 0 ? `₹ ${e.gstAmount} (${e.gstRate}%)` : '-' },
+    { key: 'totalAmount', header: 'Total Outflow', align: 'right', formatter: (e) => `₹ ${e.totalAmount}` },
+    { key: 'isItcClaimable', header: 'ITC', align: 'center', formatter: (e) => e.isItcClaimable ? 'Eligible' : 'None' }
+  ];
+
+  isColVisible(key: string): boolean {
+    const col = this.expenseColumns.find(c => c.key === key);
+    return col ? col.visible !== false : true;
+  }
+
+  get visibleColsCount(): number {
+    return this.expenseColumns.filter(c => c.visible !== false).length;
+  }
 
   paginatedExpenses = computed(() => {
     const list = this.filteredExpenses();

@@ -591,3 +591,4 @@ export class BmGridToolbarComponent implements OnInit, OnChanges {
     } catch {}
   }
 }
+

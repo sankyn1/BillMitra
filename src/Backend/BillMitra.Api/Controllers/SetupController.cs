@@ -40,4 +40,19 @@ public class SetupController : ControllerBase
             return BadRequest(ApiResponse<SetupStatusDto>.Fail(ex.Message));
         }
     }
+
+    [HttpPost("reset-data")]
+    public async Task<ActionResult<ApiResponse<bool>>> ResetData(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _setupService.ResetTransactionalAndMasterDataAsync(cancellationToken);
+            return Ok(ApiResponse<bool>.Ok(result, "All transaction and master records have been cleared and document sequence counters have been reset to 0."));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to clear test data.");
+            return BadRequest(ApiResponse<bool>.Fail($"Failed to reset data: {ex.Message}"));
+        }
+    }
 }

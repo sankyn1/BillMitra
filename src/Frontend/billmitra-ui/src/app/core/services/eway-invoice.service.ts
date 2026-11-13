@@ -183,5 +183,33 @@ export class EWayInvoiceService {
   getDocumentSummary(documentId: string): Observable<ApiResponse<DocumentEWayInvoiceSummaryDto>> {
     return this.http.get<ApiResponse<DocumentEWayInvoiceSummaryDto>>(`${this.baseUrl}/einvoice/document/${documentId}/summary`);
   }
+
+  downloadEWayBillPdf(id: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/ewaybill/${id}/pdf`, {
+      responseType: 'blob'
+    });
+  }
+
+  printOrDownloadPdf(id: string, fileName?: string): void {
+    this.downloadEWayBillPdf(id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const win = window.open(url, '_blank');
+        if (!win) {
+          // If popup is blocked, trigger direct file download
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName || `EWayBill_${id.substring(0, 8)}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+        setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+      },
+      error: (err) => {
+        console.error('Failed to download/print E-Way Bill PDF', err);
+      }
+    });
+  }
 }
 

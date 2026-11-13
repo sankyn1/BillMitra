@@ -11,8 +11,10 @@ public interface IEWayBillService
     Task<EWayBillDto> GenerateAsync(GenerateEWayBillRequest request, CancellationToken cancellationToken = default);
     Task<EWayBillDto> UpdateVehicleAsync(UpdatePartBRequest request, CancellationToken cancellationToken = default);
     Task<EWayBillDto> CancelAsync(CancelEWayBillRequest request, CancellationToken cancellationToken = default);
+    Task<EWayBillDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<EWayBillDto?> GetByDocumentIdAsync(Guid documentId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<EWayBillDto>> ListAsync(int page = 1, int pageSize = 50, CancellationToken cancellationToken = default);
+    Task<byte[]> GeneratePdfAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
 public interface IEInvoiceService

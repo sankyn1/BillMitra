@@ -8,12 +8,13 @@ import {
   PurchaseDocumentItemInput
 } from '../../core/services/purchase-expense.service';
 import { DialogService } from '../../shared/services/dialog.service';
-import { BmPaginationComponent } from '../../shared/components';
+import { BmPaginationComponent, BmGridToolbarComponent } from '../../shared/components';
+import { GridColumnDef } from '../../shared/models';
 
 @Component({
   selector: 'app-purchase-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, BmPaginationComponent],
+  imports: [CommonModule, FormsModule, BmPaginationComponent, BmGridToolbarComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -59,15 +60,20 @@ import { BmPaginationComponent } from '../../shared/components';
         </div>
       </div>
 
-      <!-- Filter Bar -->
-      <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="w-64">
-            <input type="text" [(ngModel)]="searchQuery" placeholder="Search supplier or bill no..."
-                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-hidden" />
-          </div>
+      <!-- Search, Export & Column Customization Toolbar -->
+      <bm-grid-toolbar
+        gridId="purchases"
+        [columns]="purchaseColumns"
+        [data]="purchases()"
+        title="Inward_Purchases"
+        [totalCount]="filteredPurchases().length"
+        itemName="Bills"
+        searchPlaceholder="Search supplier or bill no..."
+        [(searchTerm)]="searchQuery"
+        (searchTermChange)="applyFilters()">
+        <div toolbar-actions class="flex items-center gap-2">
           <select [(ngModel)]="statusFilter" (change)="applyFilters()"
-                  class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-500 focus:outline-hidden">
+                  class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-emerald-500 focus:outline-hidden">
             <option value="">All Statuses</option>
             <option value="1">Draft</option>
             <option value="2">Finalized</option>
@@ -76,7 +82,7 @@ import { BmPaginationComponent } from '../../shared/components';
             <option value="5">Cancelled</option>
           </select>
         </div>
-      </div>
+      </bm-grid-toolbar>
 
       <!-- Inward Purchases Table -->
       <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
@@ -84,38 +90,38 @@ import { BmPaginationComponent } from '../../shared/components';
           <table class="w-full text-left text-sm text-slate-600">
             <thead class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th class="px-4 py-3.5">Bill / Invoice #</th>
-                <th class="px-4 py-3.5">Supplier Details</th>
-                <th class="px-4 py-3.5">Bill Date</th>
-                <th class="px-4 py-3.5">Place of Supply</th>
-                <th class="px-4 py-3.5 text-right">Taxable</th>
-                <th class="px-4 py-3.5 text-right">GST</th>
-                <th class="px-4 py-3.5 text-right">Grand Total</th>
-                <th class="px-4 py-3.5 text-center">Status</th>
-                <th class="px-4 py-3.5 text-right">Actions</th>
+                <th class="px-4 py-3.5" *ngIf="isColVisible('supplierInvoiceNumber')">Bill / Invoice #</th>
+                <th class="px-4 py-3.5" *ngIf="isColVisible('supplierName')">Supplier Details</th>
+                <th class="px-4 py-3.5" *ngIf="isColVisible('supplierInvoiceDate')">Bill Date</th>
+                <th class="px-4 py-3.5" *ngIf="isColVisible('placeOfSupplyStateCode')">Place of Supply</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isColVisible('subTotalTaxable')">Taxable</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isColVisible('totalTax')">GST</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isColVisible('grandTotal')">Grand Total</th>
+                <th class="px-4 py-3.5 text-center" *ngIf="isColVisible('documentStatusName')">Status</th>
+                <th class="px-4 py-3.5 text-right" *ngIf="isColVisible('actions')">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
               <tr *ngFor="let doc of paginatedPurchases()" class="hover:bg-slate-50/75">
-                <td class="px-4 py-3 font-medium text-slate-900">
+                <td class="px-4 py-3 font-medium text-slate-900" *ngIf="isColVisible('supplierInvoiceNumber')">
                   {{ doc.supplierInvoiceNumber }}
                   <div class="text-xs text-slate-400">Created: {{ doc.createdAtUtc | date:'shortDate' }}</div>
                 </td>
-                <td class="px-4 py-3">
+                <td class="px-4 py-3" *ngIf="isColVisible('supplierName')">
                   <div class="font-medium text-slate-800">{{ doc.supplierName }}</div>
                   <div class="text-xs text-slate-400 font-mono">{{ doc.supplierGstin || 'Unregistered' }}</div>
                 </td>
-                <td class="px-4 py-3 text-slate-600">{{ doc.supplierInvoiceDate | date:'mediumDate' }}</td>
-                <td class="px-4 py-3">
+                <td class="px-4 py-3 text-slate-600" *ngIf="isColVisible('supplierInvoiceDate')">{{ doc.supplierInvoiceDate | date:'mediumDate' }}</td>
+                <td class="px-4 py-3" *ngIf="isColVisible('placeOfSupplyStateCode')">
                   <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium"
                         [ngClass]="doc.supplierStateCode === doc.placeOfSupplyStateCode ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'">
                     State {{ doc.supplierStateCode }} {{ doc.supplierStateCode === doc.placeOfSupplyStateCode ? '(Intra)' : '(Inter)' }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-right font-medium text-slate-700">₹{{ doc.subTotalTaxable | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-right text-slate-600">₹{{ doc.totalTax | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-right font-semibold text-slate-900">₹{{ doc.grandTotal | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-center">
+                <td class="px-4 py-3 text-right font-medium text-slate-700" *ngIf="isColVisible('subTotalTaxable')">₹{{ doc.subTotalTaxable | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-right text-slate-600" *ngIf="isColVisible('totalTax')">₹{{ doc.totalTax | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-right font-semibold text-slate-900" *ngIf="isColVisible('grandTotal')">₹{{ doc.grandTotal | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-center" *ngIf="isColVisible('documentStatusName')">
                   <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
                         [ngClass]="{
                           'bg-amber-100 text-amber-800': doc.documentStatus === 1,
@@ -126,7 +132,7 @@ import { BmPaginationComponent } from '../../shared/components';
                     {{ doc.documentStatusName }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-right">
+                <td class="px-4 py-3 text-right" *ngIf="isColVisible('actions')">
                   <div class="flex items-center justify-end gap-2">
                     <button *ngIf="doc.documentStatus === 1" (click)="finalizeDoc(doc)"
                             class="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
@@ -140,7 +146,7 @@ import { BmPaginationComponent } from '../../shared/components';
                 </td>
               </tr>
               <tr *ngIf="filteredPurchases().length === 0">
-                <td colspan="9" class="px-4 py-12 text-center text-slate-400">
+                <td [attr.colspan]="visibleColsCount" class="px-4 py-12 text-center text-slate-400">
                   No inward purchase bills found matching current filter.
                 </td>
               </tr>
@@ -274,6 +280,27 @@ export class PurchaseListComponent implements OnInit {
 
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
+
+  purchaseColumns: GridColumnDef[] = [
+    { key: 'supplierInvoiceNumber', header: 'Bill / Invoice #', locked: true },
+    { key: 'supplierName', header: 'Supplier Details', locked: true, formatter: (p) => `${p.supplierName} (${p.supplierGstin || 'Unregistered'})` },
+    { key: 'supplierInvoiceDate', header: 'Bill Date', formatter: (p) => new Date(p.supplierInvoiceDate).toLocaleDateString() },
+    { key: 'placeOfSupplyStateCode', header: 'Place of Supply', formatter: (p) => `State ${p.supplierStateCode} (${p.supplierStateCode === p.placeOfSupplyStateCode ? 'Intra' : 'Inter'})` },
+    { key: 'subTotalTaxable', header: 'Taxable', align: 'right', formatter: (p) => `₹ ${p.subTotalTaxable}` },
+    { key: 'totalTax', header: 'GST', align: 'right', formatter: (p) => `₹ ${p.totalTax}` },
+    { key: 'grandTotal', header: 'Grand Total', align: 'right', formatter: (p) => `₹ ${p.grandTotal}` },
+    { key: 'documentStatusName', header: 'Status', align: 'center' },
+    { key: 'actions', header: 'Actions', exportable: false, sortable: false, locked: true }
+  ];
+
+  isColVisible(key: string): boolean {
+    const col = this.purchaseColumns.find(c => c.key === key);
+    return col ? col.visible !== false : true;
+  }
+
+  get visibleColsCount(): number {
+    return this.purchaseColumns.filter(c => c.visible !== false).length;
+  }
 
   paginatedPurchases = computed(() => {
     const list = this.filteredPurchases();
