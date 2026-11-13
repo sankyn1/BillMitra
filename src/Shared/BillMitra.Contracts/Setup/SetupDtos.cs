@@ -47,3 +47,19 @@ public class InitialSetupRequest
     public string OwnerPassword { get; set; } = string.Empty;
 }
 
+public class SelectiveResetRequest
+{
+    public string Password { get; set; } = string.Empty;
+    public bool ResetSalesInvoices { get; set; } = true;
+    public bool ResetPurchases { get; set; } = true;
+    public bool ResetExpenses { get; set; } = true;
+    public bool ResetPaymentsAndLedgers { get; set; } = true;
+    public bool ResetEWayAndEInvoices { get; set; } = true;
+    public bool ResetStockAndBatches { get; set; } = true;
+    public bool ResetParties { get; set; }
+    public bool ResetProducts { get; set; }
+    public bool ResetGstFilings { get; set; } = true;
+    public bool ResetDocumentSequences { get; set; } = true;
+}
+
+

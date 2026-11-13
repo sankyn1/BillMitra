@@ -8,7 +8,7 @@
       <button class="bm-sidebar-toggle" (click)="toggleSidebar()" title="Toggle Sidebar">
         <i class="pi pi-bars"></i>
       </button>
-      <div class="bm-brand-text">
+      <div class="bm-brand-text" (click)="onBrandSecretClick(secretResetModal)" style="cursor: pointer;" title="BillMitra Enterprise">
         <span class="bm-brand-title">BillMitra</span>
         <span class="bm-brand-badge">GST Enterprise</span>
       </div>
@@ -320,3 +320,6 @@
 
 <!-- Centralized Professional Dialog & Toast System -->
 <app-bm-dialog></app-bm-dialog>
+
+<!-- Secret Developer / Admin Data Reset Console -->
+<app-secret-reset-modal #secretResetModal></app-secret-reset-modal>

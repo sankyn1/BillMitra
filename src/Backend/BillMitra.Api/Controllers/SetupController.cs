@@ -55,4 +55,25 @@ public class SetupController : ControllerBase
             return BadRequest(ApiResponse<bool>.Fail($"Failed to reset data: {ex.Message}"));
         }
     }
+
+    [HttpPost("reset-selective")]
+    public async Task<ActionResult<ApiResponse<bool>>> ResetSelective(
+        [FromBody] SelectiveResetRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _setupService.ResetSelectiveDataAsync(request, cancellationToken);
+            return Ok(ApiResponse<bool>.Ok(result, "Selective reset completed successfully."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ApiResponse<bool>.Fail(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to perform selective reset.");
+            return BadRequest(ApiResponse<bool>.Fail($"Reset failed: {ex.Message}"));
+        }
+    }
 }

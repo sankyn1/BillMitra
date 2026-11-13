@@ -46,6 +46,20 @@ export interface InitialSetupRequest {
   ownerPassword: string;
 }
 
+export interface SelectiveResetRequest {
+  password: string;
+  resetSalesInvoices: boolean;
+  resetPurchases: boolean;
+  resetExpenses: boolean;
+  resetPaymentsAndLedgers: boolean;
+  resetEWayAndEInvoices: boolean;
+  resetStockAndBatches: boolean;
+  resetParties: boolean;
+  resetProducts: boolean;
+  resetGstFilings: boolean;
+  resetDocumentSequences: boolean;
+}
+
 export interface CompanyProfileDto {
   id: string;
   legalName: string;
@@ -188,6 +202,10 @@ export class SetupService {
 
   public resetData(): Observable<ApiResponse<boolean>> {
     return this.http.post<ApiResponse<boolean>>(`${this.baseUrl}/setup/reset-data`, {});
+  }
+
+  public resetSelectiveData(req: SelectiveResetRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.baseUrl}/setup/reset-selective`, req);
   }
 }
 

@@ -18,6 +18,7 @@ import { InventoryDashboardComponent } from './features/inventory/inventory-dash
 import { ReportsDashboardComponent } from './features/reports/reports-dashboard.component';
 import { BackupRestoreComponent } from './features/backups/backup-restore.component';
 import { BmDialogComponent } from './shared/components/bm-dialog.component';
+import { SecretResetModalComponent } from './shared/components/secret-reset-modal.component';
 import {
   BmButtonDirective,
   BmPanelDirective,
@@ -52,6 +53,7 @@ import {
     ReportsDashboardComponent,
     BackupRestoreComponent,
     BmDialogComponent,
+    SecretResetModalComponent,
     BmButtonDirective,
     BmPanelDirective,
     BmPanelHeaderDirective,
@@ -73,6 +75,8 @@ export class App implements OnInit {
   protected isSidebarCollapsed = false;
   protected activeMenu = 'dashboard';
   protected activeInvoiceId: string | null = null;
+  private secretClickCount = 0;
+  private secretClickTimer: any = null;
 
   ngOnInit(): void {
     this.refreshAll();
@@ -106,5 +110,19 @@ export class App implements OnInit {
 
   onSetupCompleted(): void {
     this.refreshAll();
+  }
+
+  onBrandSecretClick(secretModal: SecretResetModalComponent): void {
+    this.secretClickCount++;
+    if (this.secretClickTimer) clearTimeout(this.secretClickTimer);
+
+    if (this.secretClickCount >= 5) {
+      this.secretClickCount = 0;
+      secretModal.open();
+    } else {
+      this.secretClickTimer = setTimeout(() => {
+        this.secretClickCount = 0;
+      }, 2000);
+    }
   }
 }

@@ -36,10 +36,6 @@ import {
           <p class="bm-page-subtitle">Configure business statutory credentials, invoice templates, digital letterhead banners, and pre-printed stationery margins</p>
         </div>
         <div class="bm-page-actions">
-          <button bmButton bmVariant="danger" bmSize="md" (click)="confirmResetAllData()" title="Clear all invoices, purchases, payments, expenses, parties, items and reset sequences back to 0">
-            <i class="pi pi-trash"></i>
-            <span>Reset All Data & Sequences</span>
-          </button>
           <button bmButton bmVariant="secondary" bmSize="md" (click)="loadProfile()">
             <i class="pi pi-refresh"></i>
             <span>Reload</span>
@@ -559,27 +555,5 @@ export class CompanySettingsComponent implements OnInit {
     const p = this.currentLetterheadPath();
     if (!p) return '';
     return p.split(/[\/\\]/).pop() || 'letterhead.png';
-  }
-
-  async confirmResetAllData(): Promise<void> {
-    const ok = await this.dialogService.confirm(
-      'Wipe All Test Data & Reset Counters',
-      'WARNING: This will permanently delete all sales invoices, purchases, expenses, payment vouchers, stock movements, parties, and products. Document numbering sequence counters will be reset to 0 so you can test starting from #1. Company registration remains intact. Do you wish to proceed?',
-      'Yes, Wipe Clean',
-      true,
-      'danger'
-    );
-    if (!ok) return;
-
-    this.setupService.resetData().subscribe({
-      next: (res) => {
-        if (res.success) {
-          this.dialogService.toast('All transactional and master records wiped. Sequences reset to 0.', 'success');
-        }
-      },
-      error: (err) => {
-        this.dialogService.alert('Reset Failed', err?.error?.message || 'Failed to reset database.', 'danger');
-      }
-    });
   }
 }
